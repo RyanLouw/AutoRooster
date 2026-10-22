@@ -1,0 +1,55 @@
+# Validation evidence — 22 October 2026
+
+## Current status
+
+The application source, tests, Windows publishing scripts and documentation have been implemented. Linux Release build and all automated tests pass. A Windows x64 executable folder was cross-published successfully. **Phase 15 release acceptance is incomplete**: the Visual C++ prerequisite installer could not be downloaded (HTTP 403), and this Linux machine cannot execute or visually validate WPF.
+
+Do not describe this candidate as verified for school deployment until the Windows acceptance checks pass.
+
+## Executed checks
+
+- .NET SDK 10.0.402 and runtime 10.0.13 installed; EF CLI 10.0.13 installed.
+- Frozen `dotnet restore --locked-mode` exercised through the reusable cloud setup script.
+- Full Release solution build: **success, 0 warnings, 0 errors**.
+- Five test projects: **80 discovered/executed, 80 passed, 0 failed, 0 skipped**.
+
+| Test project | Passed |
+| --- | ---: |
+| Application | 15 |
+| Domain | 16 |
+| Infrastructure | 15 |
+| Integration | 3 |
+| Scheduling | 31 |
+
+Tests cover half-open intervals, availability precedence, capacity, independent positions, limits, breaks, locks, splitting, exact off-grid boundaries, target arithmetic, zero targets, determinism on proven cases, 12 seeded randomized scenarios, 75-teacher scheduling versus a feasible baseline, SQLite migrations/constraints/rollback/reopen, backup/restore, corrupt-backup rejection, structured logs, typed Excel content, PDF extraction, repeated headings and text bounds. The real SQLite acceptance test creates the 75-teacher demo school, generates and regenerates a roster while preserving a lock, exports reports, reopens the database, and restores a backup. An upgrade test preserves records from the initial schema. Historical workload remains visible after a teacher is deactivated.
+
+These are meaningful checks, not proof that every possible input or UI workflow is correct. Test counts exclude iterations inside randomized tests.
+
+## TDD and gates
+
+New phase tests were written before the corresponding implementation and executed to expose missing functionality or behavioral failures. Missing public types initially produced compile failures in the red step. Splitting, realistic fairness, independent venue validation, archived-exam handling and historical workload also exposed behavioral failures before correction. Failed gates were investigated and rerun before later phases. Initial vulnerable dependency selections were replaced without suppressing advisories or compiler warnings.
+
+Recorded phase totals after passing available gates: 1: 5; 2: 20; 3: 23; 4: 30; 5: 41; 6: 45; 7: 51; 8: 54; 9: 56; 10: 59; 11: 62; 12: 63; 13: 70; 14: 76; final automated suite: 80.
+
+MSBuild worker reuse eventually failed in the isolated runner. Single-node builds with build servers disabled resolved that environmental failure. No checks or assertions were removed.
+
+## Windows package
+
+`dotnet publish src/SchoolExamScheduler.Desktop -c Release -r win-x64 --self-contained true -p:PublishSingleFile=false -p:PublishTrimmed=false -p:UseSharedCompilation=false --disable-build-servers -m:1 -nr:false -o artifacts/win-x64` succeeded after correcting the WPF project's runtime identifiers to Windows only.
+
+Inspected assets include the executable, application DLL, .NET host/runtime, OR-Tools native bridge/solver/dependencies, SQLite native library, and font notice. The .NET runtime is bundled. PE import inspection confirmed external Microsoft VC runtime dependencies `MSVCP140.dll`, `VCRUNTIME140.dll`, and `VCRUNTIME140_1.dll`; these are not supplied by this cross-published folder.
+
+The official redistributable URL redirected to `download.visualstudio.microsoft.com`, which returned HTTP 403. The environment draft now adds this domain. After reviewing/saving that network change, retry downloading the official installer. The Windows publishing script includes it only after a valid Microsoft Authenticode check. That download/signature step is unrun here; no license or signature checks were bypassed.
+
+The source archive and Windows candidate archive are generated under `artifacts`. The candidate includes a prerequisite notice. It is usable only on Windows machines already providing the required VC runtime until the installer can be bundled.
+
+## Unrun release requirements
+
+- Windows process launch and automated navigation smoke script.
+- Visual and interaction validation at the required resolutions and DPI settings.
+- Offline execution on a clean Windows machine without development tools, after installing the VC prerequisite.
+- Actual printer/Excel viewer checks and the complete manual acceptance scenario.
+- GitHub Windows CI execution; workflow files are present but no repository push or workflow run was performed.
+- Cloud environment publication and restoration into a fresh task.
+
+See WindowsAcceptance.md. Cloud `install_script`, `start_skill` and the Microsoft download-domain addition were saved as a draft. Saving did not apply network changes or publish the environment. Review and save the changes in environment settings, then publish the prepared environment.

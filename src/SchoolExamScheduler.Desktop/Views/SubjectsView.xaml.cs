@@ -1,0 +1,1 @@
+namespace SchoolExamScheduler.Desktop.Views; public partial class SubjectsView : System.Windows.Controls.UserControl { public SubjectsView()=>InitializeComponent(); }

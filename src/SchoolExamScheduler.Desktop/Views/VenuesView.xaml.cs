@@ -1,0 +1,1 @@
+namespace SchoolExamScheduler.Desktop.Views; public partial class VenuesView : System.Windows.Controls.UserControl { public VenuesView()=>InitializeComponent(); }
