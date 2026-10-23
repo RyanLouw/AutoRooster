@@ -1,7 +1,7 @@
 <UserControl x:Class="SchoolExamScheduler.Desktop.Views.AvailabilityView" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 <Grid Margin="16"><Grid.ColumnDefinitions><ColumnDefinition Width="300"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
 <ScrollViewer VerticalScrollBarVisibility="Auto"><StackPanel>
-<TextBlock Text="Teacher availability" FontSize="20"/><TextBlock Text="Teacher"/><ComboBox ItemsSource="{Binding Teachers}" SelectedItem="{Binding SelectedTeacher}"><ComboBox.ItemTemplate><DataTemplate><TextBlock><Run Text="{Binding FirstName}"/><Run Text=" "/><Run Text="{Binding LastName}"/></TextBlock></DataTemplate></ComboBox.ItemTemplate></ComboBox>
+<TextBlock Text="Teacher availability" FontSize="20"/><TextBlock Text="Teacher"/><ComboBox ItemsSource="{Binding Teachers}" SelectedItem="{Binding SelectedTeacher}"><ComboBox.ItemTemplate><DataTemplate><TextBlock><Run Text="{Binding FirstName,Mode=OneWay}"/><Run Text=" "/><Run Text="{Binding LastName,Mode=OneWay}"/></TextBlock></DataTemplate></ComboBox.ItemTemplate></ComboBox>
 <Calendar SelectedDate="{Binding Date}"/><CheckBox Content="Show selected date only" IsChecked="{Binding SelectedDateOnly}"/>
 <TextBlock Text="Date"/><DatePicker SelectedDate="{Binding Date}"/><TextBlock Text="Start (HH:mm)"/><TextBox Text="{Binding StartTime}"/><TextBlock Text="End (HH:mm)"/><TextBox Text="{Binding EndTime}"/>
 <CheckBox Content="Available (restricts default window)" IsChecked="{Binding IsAvailable}"/><TextBlock Text="Reason"/><TextBox Text="{Binding Reason}"/>

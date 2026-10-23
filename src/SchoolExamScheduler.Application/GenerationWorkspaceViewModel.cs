@@ -7,6 +7,7 @@ using SchoolExamScheduler.Scheduling;
 namespace SchoolExamScheduler.Application;
 public partial class GenerationWorkspaceViewModel(RosterWorkflow workflow,ILogger<GenerationWorkspaceViewModel> logger) : WorkspaceViewModel(logger)
 {
+    public override Task RefreshAsync()=>ValidateInputsCommand.IsRunning ? ValidateInputsCommand.ExecutionTask??Task.CompletedTask : ValidateInputsCommand.ExecuteAsync(null);
     [ObservableProperty] private string rosterName="Examination roster";
     [ObservableProperty] private Guid? lockedRosterId;
     [ObservableProperty] private string status="Validate inputs before generating.";

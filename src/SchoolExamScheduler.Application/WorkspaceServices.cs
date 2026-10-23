@@ -12,13 +12,15 @@ public interface ISchoolDataStore
 public interface IUserDialogs { Task<bool> ConfirmAsync(string message); }
 public abstract partial class WorkspaceViewModel(ILogger logger) : ObservableObject
 {
+    public virtual Task RefreshAsync()=>Task.CompletedTask;
     [ObservableProperty] private string error="";
     [ObservableProperty] private bool isBusy;
+    private int activeOperations;
     protected async Task RunAsync(Func<Task> action)
     {
-        IsBusy=true;Error="";
+        Interlocked.Increment(ref activeOperations);IsBusy=true;Error="";
         try{await action();}
         catch(Exception e) {logger.LogError(e,"Workspace operation failed");Error=e.Message;}
-        finally {IsBusy=false;}
+        finally {IsBusy=Interlocked.Decrement(ref activeOperations)>0;}
     }
 }

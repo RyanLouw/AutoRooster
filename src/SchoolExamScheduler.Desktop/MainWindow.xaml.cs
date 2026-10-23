@@ -7,6 +7,17 @@ public partial class MainWindow : Window
     {
         InitializeComponent();DataContext=new {Teachers=teachers,Availability=availability,ReferenceData=referenceData,Examinations=examinations,Generation=generation,Review=review,Reports=reports,Settings=settings};
         settings.DatabaseRestored+=Close;
-        Loaded+=async (_,_)=>{await teachers.LoadCommand.ExecuteAsync(null);await availability.LoadCommand.ExecuteAsync(null);await referenceData.LoadCommand.ExecuteAsync(null);await examinations.LoadCommand.ExecuteAsync(null);await review.LoadCommand.ExecuteAsync(null);await reports.LoadCommand.ExecuteAsync(null);await settings.LoadCommand.ExecuteAsync(null);};
+        Loaded+=async (_,_)=>await RefreshActiveWorkspaceAsync();
+    }
+    private async void WorkspaceChanged(object sender,System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        // Ignore selection changes bubbling from grids, combo boxes and nested tabs.
+        if(ReferenceEquals(e.OriginalSource,Workspaces) && IsLoaded)await RefreshActiveWorkspaceAsync();
+    }
+    private Task RefreshActiveWorkspaceAsync()
+    {
+        if(Workspaces.SelectedItem is System.Windows.Controls.TabItem {Content:FrameworkElement {DataContext:WorkspaceViewModel workspace}} && !workspace.IsBusy)
+            return workspace.RefreshAsync();
+        return Task.CompletedTask;
     }
 }

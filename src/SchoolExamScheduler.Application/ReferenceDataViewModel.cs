@@ -6,6 +6,7 @@ using SchoolExamScheduler.Domain;
 namespace SchoolExamScheduler.Application;
 public partial class ReferenceDataViewModel(ISchoolDataStore store,ILogger<ReferenceDataViewModel> logger) : WorkspaceViewModel(logger)
 {
+    public override Task RefreshAsync()=>LoadCommand.IsRunning ? LoadCommand.ExecutionTask??Task.CompletedTask : LoadCommand.ExecuteAsync(null);
     public ObservableCollection<Subject> Subjects {get;}=[];
     public ObservableCollection<Venue> Venues {get;}=[];
     public ObservableCollection<VenueUnavailability> VenueRestrictions {get;}=[];

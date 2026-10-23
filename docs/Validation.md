@@ -1,3 +1,15 @@
+# Automatic refresh and report binding fix — 23 October 2026
+
+Locked restore and full Release WPF cross-build passed with zero warnings/errors. All **111 tests passed**, none failed or skipped: Application 29, Domain 16, Infrastructure 20, Integration 5, Scheduling 41.
+
+Reproduced three regression failures before implementation: reports did not build on load, review duties stayed empty until explicitly loaded, and display-only `Run.Text` bindings lacked an explicit one-way mode. The chart's computed `ActualHours` and `TargetHours` values now use `Mode=OneWay`; all inline display bindings in the shipped views use the same mode.
+
+The main window refreshes the active workspace on startup and top-level tab navigation, ignoring selection events from nested tabs, grids and combo boxes. Review and Reports load their selected roster automatically, including when the selection changes. Version refresh preserves an existing selection, falls back to the newest available version and clears old results when no versions remain. Asynchronous completions check the selected roster before applying results. Existing manual refresh controls remain available.
+
+Application regressions cover automatic report/duty loading, roster changes, newly added teachers, retained selection, empty lists, and explicit display-only inline bindings in the actual shipped XAML. Windows interaction and visual confirmation remain unrun on this Linux machine.
+
+---
+
 # Solver timeout fix — 23 October 2026
 
 Locked restore and the full Release solution build passed with zero warnings/errors. All **108 tests passed**, with none failed or skipped: Application 26, Domain 16, Infrastructure 20, Integration 5, Scheduling 41.

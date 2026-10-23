@@ -13,6 +13,7 @@ public partial class VenueAllocationRow(Guid venueId,int studentCount,int invigi
 }
 public partial class ExaminationWorkspaceViewModel(ISchoolDataStore store,ILogger<ExaminationWorkspaceViewModel> logger) : WorkspaceViewModel(logger)
 {
+    public override Task RefreshAsync()=>LoadCommand.IsRunning ? LoadCommand.ExecutionTask??Task.CompletedTask : LoadCommand.ExecuteAsync(null);
     public ObservableCollection<Exam> Exams {get;}=[];
     public ObservableCollection<Subject> Subjects {get;}=[];
     public ObservableCollection<Venue> Venues {get;}=[];

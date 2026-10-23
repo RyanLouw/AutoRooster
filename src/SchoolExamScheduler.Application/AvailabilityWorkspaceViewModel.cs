@@ -7,6 +7,7 @@ using SchoolExamScheduler.Domain;
 namespace SchoolExamScheduler.Application;
 public partial class AvailabilityWorkspaceViewModel(ISchoolDataStore store,IUserDialogs dialogs,ILogger<AvailabilityWorkspaceViewModel> logger) : WorkspaceViewModel(logger)
 {
+    public override Task RefreshAsync()=>LoadCommand.IsRunning ? LoadCommand.ExecutionTask??Task.CompletedTask : LoadCommand.ExecuteAsync(null);
     public ObservableCollection<Teacher> Teachers {get;}=[];
     public ObservableCollection<TeacherAvailability> Records {get;}=[];
     public IEnumerable<TeacherAvailability> FilteredRecords=>Records.Where(x=>(SelectedTeacher is null || x.TeacherId==SelectedTeacher.Id) && (!SelectedDateOnly || x.Date==DateOnly.FromDateTime(Date))).OrderBy(x=>x.Date).ThenBy(x=>x.StartTime);

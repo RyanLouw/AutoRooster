@@ -25,6 +25,19 @@ public sealed class ReadOnlyGridBindingTests
     }
 
     [Fact]
+    public void DisplayOnlyInlineTextNeverRequestsSourceUpdates()
+    {
+        XNamespace presentation="http://schemas.microsoft.com/winfx/2006/xaml/presentation";
+        foreach(var path in Directory.GetFiles(Path.Combine(AppContext.BaseDirectory,"DesktopViews"),"*.xaml"))
+        foreach(var run in XDocument.Load(path).Descendants(presentation+"Run"))
+        {
+            var binding=(string?)run.Attribute("Text");
+            if(binding?.StartsWith("{Binding ",StringComparison.Ordinal)==true)
+                Assert.True(binding.Contains("Mode=OneWay",StringComparison.Ordinal),$"{Path.GetFileName(path)}: {binding}");
+        }
+    }
+
+    [Fact]
     public void AvailabilityPolicyCanOnlyBeChangedThroughValidatedDomainOperations()
     {
         var property = typeof(TeacherAvailability).GetProperty(nameof(TeacherAvailability.IsAvailable))!;

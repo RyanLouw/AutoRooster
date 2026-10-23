@@ -7,6 +7,7 @@ namespace SchoolExamScheduler.Application;
 
 public partial class TeacherWorkspaceViewModel(ISchoolDataStore store,IUserDialogs dialogs,ILogger<TeacherWorkspaceViewModel> logger) : WorkspaceViewModel(logger)
 {
+    public override Task RefreshAsync()=>LoadCommand.IsRunning ? LoadCommand.ExecutionTask??Task.CompletedTask : LoadCommand.ExecuteAsync(null);
     public ObservableCollection<Teacher> Teachers {get;}=[];
     public IEnumerable<Teacher> FilteredTeachers=>Teachers.Where(x=>!ActiveOnly || x.IsActive).Where(x=>$"{x.FirstName} {x.LastName} {x.EmployeeNumber}".Contains(Search,StringComparison.CurrentCultureIgnoreCase)).OrderBy(x=>x.LastName).ThenBy(x=>x.FirstName);
     [ObservableProperty] private string search="";

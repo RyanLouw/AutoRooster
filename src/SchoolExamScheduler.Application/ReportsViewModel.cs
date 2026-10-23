@@ -13,6 +13,7 @@ public sealed record WorkloadChartRow(string Teacher,decimal Weight,int Availabl
 }
 public partial class ReportsViewModel(ISchoolDataStore store,ReportingService service,IReportExporter exporter,IFileDialogs files,ILogger<ReportsViewModel> logger) : WorkspaceViewModel(logger)
 {
+    public override Task RefreshAsync()=>LoadCommand.IsRunning ? LoadCommand.ExecutionTask??Task.CompletedTask : LoadCommand.ExecuteAsync(null);
     public ObservableCollection<RosterVersion> Rosters {get;}=[];
     public ObservableCollection<Teacher> Teachers {get;}=[];
     public ObservableCollection<WorkloadChartRow> Workloads {get;}=[];
@@ -30,18 +31,38 @@ public partial class ReportsViewModel(ISchoolDataStore store,ReportingService se
     partial void OnFilterDateChanged(bool value)=>RefreshFilters();
     partial void OnSearchChanged(string value)=>RefreshFilters();
     [RelayCommand] private void ClearFilters(){SelectedTeacher=null;FilterDate=false;Search="";}
+    private bool loadingVersions;
+    partial void OnSelectedRosterChanged(RosterVersion? value)
+    {
+        if(!loadingVersions)BuildReportCommand.Execute(null);
+    }
     [RelayCommand] private Task LoadAsync()=>RunAsync(async()=>
     {
-        var id=SelectedRoster?.Id;Rosters.Clear();foreach(var roster in (await store.ListAsync<RosterVersion>()).OrderByDescending(x=>x.CreatedOn))Rosters.Add(roster);SelectedRoster=Rosters.FirstOrDefault(x=>x.Id==id)??Rosters.FirstOrDefault();
+        var id=SelectedRoster?.Id;
+        var versions=(await store.ListAsync<RosterVersion>()).OrderByDescending(x=>x.CreatedOn).ToArray();
+        loadingVersions=true;
+        try
+        {
+            Rosters.Clear();foreach(var roster in versions)Rosters.Add(roster);
+            SelectedRoster=Rosters.FirstOrDefault(x=>x.Id==id)??Rosters.FirstOrDefault();
+        }
+        finally{loadingVersions=false;}
         Teachers.Clear();foreach(var teacher in await store.ListAsync<Teacher>())Teachers.Add(teacher);
+        await RefreshReportAsync();
     });
-    [RelayCommand] private Task BuildReportAsync()=>RunAsync(async()=>
+    [RelayCommand] private Task BuildReportAsync()=>RunAsync(RefreshReportAsync);
+    private async Task RefreshReportAsync()
     {
-        if(SelectedRoster is null)throw new ArgumentException("Select a roster version.");
-        Report=await service.BuildAsync(SelectedRoster.Id);Workloads.Clear();var scale=Report.Fairness.Teachers.Select(x=>Math.Max(x.TargetMinutes,x.ActualMinutes)).DefaultIfEmpty(1).Max();scale=Math.Max(1,scale);
+        var id=SelectedRoster?.Id;
+        Report=null;Workloads.Clear();ExportStatus="";RefreshFilters();
+        if(id is null)return;
+        var snapshot=await service.BuildAsync(id.Value);
+        // A slower previous selection must never replace the newly selected report.
+        if(SelectedRoster?.Id!=id)return;
+        Report=snapshot;var scale=Report.Fairness.Teachers.Select(x=>Math.Max(x.TargetMinutes,x.ActualMinutes)).DefaultIfEmpty(1).Max();scale=Math.Max(1,scale);
         foreach(var x in Report.Fairness.Teachers.OrderByDescending(x=>x.ActualMinutes))Workloads.Add(new(Report.TeacherNames[x.TeacherId],x.Weight,x.AvailableMinutes,x.TargetMinutes,x.ActualMinutes,x.Difference,x.PercentageOfTarget,x.AssignmentCount,x.DaysAssigned,280*x.ActualMinutes/scale,280*x.TargetMinutes/scale));
         RefreshFilters();
-    });
+    }
     public IReadOnlyList<ReportExportOption> ExportOptions {get;}=
     [new(ReportKind.AllReports,"All reports (one PDF)"),new(ReportKind.Workload,"Teacher hours — whole exam period"),new(ReportKind.TeacherTimetables,"All teacher timetables"),new(ReportKind.TeacherRoster,"Selected teacher timetable"),new(ReportKind.FullRoster,"Full examination roster"),new(ReportKind.VenueRoster,"Venue roster"),new(ReportKind.Calendar,"Calendar / timeline"),new(ReportKind.UnfilledDuties,"Unfilled duties")];
     [ObservableProperty] private ReportKind exportKind=ReportKind.AllReports;
