@@ -82,6 +82,7 @@ public sealed class SchedulerDbContext(DbContextOptions<SchedulerDbContext> opti
         {
             t.HasCheckConstraint("CK_Assignment_Time","StartTime < EndTime");t.HasCheckConstraint("CK_Assignment_Position","PositionIndex >= 0");
         });
+        b.Entity<RosterVersion>().Ignore(x=>x.IsArchived).Ignore(x=>x.DisplayName);
         b.Entity<RosterVersion>().ToTable("Rosters");
         b.Entity<SchedulingSettings>().ToTable("Settings",t=>t.HasCheckConstraint("CK_Settings_Singleton","Id = 1"));
         b.Entity<AuditRecord>().ToTable("Audit");

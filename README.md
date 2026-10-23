@@ -41,6 +41,20 @@ Screens refresh automatically when opened after adding related records elsewhere
 
 For an empty database, Settings offers **Create sample school**, with confirmation. This creates 75 teachers, grades 8–12, overlapping exams, weights and leave across ten dates, using seed 42. It does not run automatically. Tests also include a deliberately infeasible sample.
 
+## Start the next test series and change staff
+
+When the current series is finished:
+
+1. Open **Settings → Start a new test series**.
+2. Under **Teachers to keep**, leave ticks only beside teachers who will remain. **Keep all** and **Keep none** help select a group quickly.
+3. Choose **Start new test series** and confirm. The old exams and roster versions disappear from the normal working lists; unticked teachers leave the active staff list. Old duty hours do not carry over. Subjects, venues, settings and dated availability are retained.
+4. In **Teachers**, use **New teacher → Save teacher** to add staff. Select a current teacher to edit their details, weight, limits or responsibilities and save. **Deactivate** removes a teacher from current staff/future rosters. Untick **Active only** if you need to find and reactivate previous staff.
+5. Add the next series' exams and venue allocations in **Examinations**, then generate a newly named roster. Only the new active exams and current staff determine its workload targets and hours.
+
+Previous data is kept outside the normal lists. Enable **Show previous series** in Review or Reports to view/export read-only older results, or in Examinations to select an old exam and **Copy** it with a new date. Historical reports preserve the names, duty hours, targets and validation results captured when the series was finished, so later staff changes do not rewrite them. Incomplete old versions retain their recorded coverage issues. The optional automatic-backup setting also applies when finishing a series.
+
+Dated availability is retained: earlier leave does not apply to different dates, but update/add entries for the next series. Exempt current teachers by clearing Can invigilate or deactivate staff who have left; do not delete teachers referenced by previous results.
+
 ## Realistic demo and fair teacher-hour targets
 
 Use **Settings → Open realistic demo (separate database)**. This opens another Desktop window with its own saved database, `demo-school-exams.db`; your normal school data is untouched. You can also run `SchoolExamScheduler.Desktop.exe --demo`. The first opening seeds 75 uniquely named teachers, 49 configurable subjects, Grades 8–12, varied exam lengths, multiple simultaneous invigilators per room, leave, partial availability and reduced workload weights. Later openings preserve your test edits. This is a broad South African secondary-school starting catalogue, not a claim about every school's curriculum. **Subjects → Add school subject catalogue** adds missing catalogue subjects to your school without replacing existing subjects; rename, add or deactivate entries as needed.

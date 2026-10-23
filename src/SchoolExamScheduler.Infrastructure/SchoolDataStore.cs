@@ -9,7 +9,7 @@ public sealed class SchoolDataStore(string databasePath,DatabaseAccess? sharedAc
         using var lease=await access.EnterAsync(cancellationToken);
         await using var db=SchedulerDbContext.Open(databasePath);
         var settings=await db.Settings.AsNoTracking().SingleAsync(cancellationToken);
-        if(settings.AutomaticBackupBeforeChanges && (deletes.Count>0 || saves.Any(x=>x is SchoolExamScheduler.Domain.RosterVersion)))
+        if(settings.AutomaticBackupBeforeChanges && (deletes.Count>0 || saves.Any(x=>x is SchoolExamScheduler.Domain.RosterVersion or SchoolExamScheduler.Domain.AuditRecord {Action:"Finish exam series"})))
             await DatabaseMaintenance.BackupCoreAsync(databasePath,Path.Combine(Path.GetDirectoryName(Path.GetFullPath(databasePath))!,"backups",$"auto-{DateTime.UtcNow:yyyyMMdd-HHmmss}-{Guid.NewGuid():N}.db"),cancellationToken);
         await using var transaction=await db.Database.BeginTransactionAsync(cancellationToken);
         foreach(var entity in deletes)db.Remove(entity);

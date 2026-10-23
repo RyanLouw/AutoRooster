@@ -1,3 +1,17 @@
+# New test-series workflow — 23 October 2026
+
+Locked restore and the final full Release build passed with zero warnings/errors. All **129 tests passed**, none failed or skipped: Application 40, Domain 16, Infrastructure 24, Integration 6, Scheduling 43. EF confirmed no pending model changes. Machine-readable results: `TestResults/new-exam-series-final`.
+
+A new series starts with an empty current exam/roster list and only the teachers selected in Settings. Unticked staff become inactive and disappear from normal staff and availability screens. Subjects, venues, settings and dated availability are reused. Current generation loads active exams and staff only and starts fresh period totals; it refuses to save an empty roster. Existing exam/teacher forms and filters are reset when the new-series action succeeds.
+
+The active-exam request regression failed before implementation. Seven application scenarios now cover separation, retained staff, confirmation/cancellation, incomplete archived results, frozen historical names/hours, archived edit protection and empty-series generation. Two real SQLite scenarios verify migration from the previous schema, rollover across restart, selected staff persistence, new-series generation/export, preserved historical reports and configured automatic backup.
+
+Before rollover, current roster reports and validation results are captured and stored as read-only snapshots. The migration adds a non-null snapshot column with an empty default, leaving existing rosters current. Old exams and results are hidden by default but remain accessible through Show previous series. Later staff or exam changes do not recalculate frozen reports. No old duties or referenced teacher records are deleted.
+
+Windows UI interaction remains unrun on this Linux machine; build and data-workflow checks do not establish visual acceptance.
+
+---
+
 # Fairness, realistic demo and editable Excel update — 23 October 2026
 
 Final locked restore, Release build and all **120 tests passed**, with none failed or skipped: Application 33, Domain 16, Infrastructure 22, Integration 6, Scheduling 43. Machine-readable results: `TestResults/fairness-realistic-verified`.

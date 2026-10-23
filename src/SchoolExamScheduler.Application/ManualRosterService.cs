@@ -35,6 +35,8 @@ public sealed class ManualRosterService(ISchoolDataStore store,RosterWorkflow wo
     }
     public async Task<IReadOnlyList<SchedulingIssue>> ValidateAsync(Guid rosterId)
     {
+        var roster=(await store.ListAsync<RosterVersion>()).Single(r=>r.Id==rosterId);
+        if(roster.IsArchived)return ArchivedRosterSnapshot.Read(roster).ValidationIssues;
         var request=await workflow.LoadRequestAsync(rosterId);var duties=(await store.ListAsync<InvigilationAssignment>()).Where(x=>x.RosterVersionId==rosterId && x.AssignmentStatus==AssignmentStatus.Assigned).Select(ToScheduled).ToArray();return RosterValidator.Validate(request,duties);
     }
     public async Task FinalizeAsync(Guid rosterId)

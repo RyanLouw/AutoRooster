@@ -19,7 +19,9 @@ public partial class ExaminationWorkspaceViewModel(ISchoolDataStore store,ILogge
     public ObservableCollection<Venue> Venues {get;}=[];
     public ObservableCollection<VenueAllocationRow> Allocations {get;}=[];
     private IReadOnlyList<ExamVenue> persistedAllocations=[];
-    public IEnumerable<Exam> FilteredExams=>Exams.Where(x=>!DateOnlyFilter || x.ExamDate==DateOnly.FromDateTime(Date)).Where(x=>$"{x.Grade} {Subjects.FirstOrDefault(s=>s.Id==x.SubjectId)?.Name} {x.Description}".Contains(Search,StringComparison.CurrentCultureIgnoreCase)).OrderBy(x=>x.ExamDate).ThenBy(x=>x.StartTime);
+    public IEnumerable<Exam> FilteredExams=>Exams.Where(x=>ShowPreviousSeries || x.IsActive).Where(x=>!DateOnlyFilter || x.ExamDate==DateOnly.FromDateTime(Date)).Where(x=>$"{x.Grade} {Subjects.FirstOrDefault(s=>s.Id==x.SubjectId)?.Name} {x.Description}".Contains(Search,StringComparison.CurrentCultureIgnoreCase)).OrderBy(x=>x.ExamDate).ThenBy(x=>x.StartTime);
+    [ObservableProperty] private bool showPreviousSeries;
+    partial void OnShowPreviousSeriesChanged(bool value)=>OnPropertyChanged(nameof(FilteredExams));
     [ObservableProperty] private string search="";
     [ObservableProperty] private bool dateOnlyFilter;
     [ObservableProperty] private Exam? selectedExam;
@@ -47,7 +49,7 @@ public partial class ExaminationWorkspaceViewModel(ISchoolDataStore store,ILogge
         persistedAllocations=await store.ListAsync<ExamVenue>();Exams.Clear();foreach(var row in await store.ListAsync<Exam>())Exams.Add(row);OnPropertyChanged(nameof(FilteredExams));
     });
     [RelayCommand] private void New(){SelectedExam=null;SelectedSubject=null;Grade=8;Description="";ExamActive=true;Allocations.Clear();}
-    [RelayCommand] private void Copy(){SelectedExam=null;Description+=" (copy)";}
+    [RelayCommand] private void Copy(){SelectedExam=null;ExamActive=true;Description+=" (copy)";}
     [RelayCommand] private void AddVenue()
     {if(SelectedVenue is null){Error="Select a venue first.";return;}Allocations.Add(new(SelectedVenue.Id,SelectedVenue.Capacity,1));}
     [RelayCommand] private void RemoveVenue(){if(SelectedAllocation is not null)Allocations.Remove(SelectedAllocation);}

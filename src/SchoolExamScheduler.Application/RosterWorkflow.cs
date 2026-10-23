@@ -7,10 +7,18 @@ public sealed class RosterWorkflow(ISchoolDataStore store,InvigilationSolver sol
     public Guid? LastCreatedRosterId {get;private set;}
     public async Task<SchedulingRequest> LoadRequestAsync(Guid? lockedRosterId=null,CancellationToken cancellationToken=default)
     {
-        var duties=lockedRosterId is null ? [] : (await store.ListAsync<InvigilationAssignment>(cancellationToken)).Where(x=>x.RosterVersionId==lockedRosterId && x.IsLocked && x.AssignmentStatus==AssignmentStatus.Assigned).Select(x=>new ScheduledAssignment(x.ExamVenueId,x.TeacherId,x.PositionIndex,x.StartTime,x.EndTime)).ToArray();
+        if(lockedRosterId is not null && (await store.ListAsync<RosterVersion>(cancellationToken)).Single(r=>r.Id==lockedRosterId).IsArchived)
+            throw new InvalidOperationException("This exam series is archived. Open its preserved report or generate a roster for the current series.");
+        var exams=(await store.ListAsync<Exam>(cancellationToken)).Where(e=>e.IsActive).ToArray();
+        var examIds=exams.Select(e=>e.Id).ToHashSet();
+        var allocations=(await store.ListAsync<ExamVenue>(cancellationToken)).Where(v=>examIds.Contains(v.ExamId)).ToArray();
+        var assignments=lockedRosterId is null ? [] : (await store.ListAsync<InvigilationAssignment>(cancellationToken)).Where(a=>a.RosterVersionId==lockedRosterId).ToArray();
+        var teachers=(await store.ListAsync<Teacher>(cancellationToken)).Where(t=>t.IsActive || assignments.Any(a=>a.TeacherId==t.Id)).ToArray();
+        var teacherIds=teachers.Select(t=>t.Id).ToHashSet();
+        var duties=lockedRosterId is null ? [] : assignments.Where(x=>x.RosterVersionId==lockedRosterId && x.IsLocked && x.AssignmentStatus==AssignmentStatus.Assigned).Select(x=>new ScheduledAssignment(x.ExamVenueId,x.TeacherId,x.PositionIndex,x.StartTime,x.EndTime)).ToArray();
         return new()
         {
-            Teachers=await store.ListAsync<Teacher>(cancellationToken),Subjects=await store.ListAsync<Subject>(cancellationToken),Venues=await store.ListAsync<Venue>(cancellationToken),Exams=await store.ListAsync<Exam>(cancellationToken),ExamVenues=await store.ListAsync<ExamVenue>(cancellationToken),Availability=await store.ListAsync<TeacherAvailability>(cancellationToken),VenueUnavailability=await store.ListAsync<VenueUnavailability>(cancellationToken),Configuration=(await store.ListAsync<SchedulingSettings>(cancellationToken)).SingleOrDefault()??new(),LockedAssignments=duties
+            Teachers=teachers,Subjects=await store.ListAsync<Subject>(cancellationToken),Venues=await store.ListAsync<Venue>(cancellationToken),Exams=exams,ExamVenues=allocations,Availability=(await store.ListAsync<TeacherAvailability>(cancellationToken)).Where(a=>teacherIds.Contains(a.TeacherId)).ToArray(),VenueUnavailability=await store.ListAsync<VenueUnavailability>(cancellationToken),Configuration=(await store.ListAsync<SchedulingSettings>(cancellationToken)).SingleOrDefault()??new(),LockedAssignments=duties
         };
     }
     public async Task<SchedulingResult> GenerateAsync(string name,Guid? lockedRosterId,CancellationToken cancellationToken=default)
@@ -22,7 +30,9 @@ public sealed class RosterWorkflow(ISchoolDataStore store,InvigilationSolver sol
             var source=(await store.ListAsync<RosterVersion>(cancellationToken)).Single(x=>x.Id==lockedRosterId);
             source.EnsureEditable();
         }
-        var request=await LoadRequestAsync(lockedRosterId,cancellationToken);var result=await solver.SolveAsync(request,cancellationToken);
+        var request=await LoadRequestAsync(lockedRosterId,cancellationToken);
+        if(request.Exams.Count==0)return new(SchedulingStatus.InvalidInput,[],[new("NoExams","Add exams and venue allocations for the next series in Examinations before generating a roster.")],new([]));
+        var result=await solver.SolveAsync(request,cancellationToken);
         if(result.Status is not (SchedulingStatus.Optimal or SchedulingStatus.Feasible))return result;
         var issues=RosterValidator.Validate(request,result.Assignments);
         if(issues.Count>0)return new(SchedulingStatus.SolverError,[],issues,result.Fairness);

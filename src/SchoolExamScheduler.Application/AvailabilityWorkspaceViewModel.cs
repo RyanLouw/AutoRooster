@@ -29,8 +29,8 @@ public partial class AvailabilityWorkspaceViewModel(ISchoolDataStore store,IUser
     }
     [RelayCommand] private Task LoadAsync()=>RunAsync(async()=>
     {
-        Teachers.Clear();foreach(var teacher in await store.ListAsync<Teacher>())Teachers.Add(teacher);
-        Records.Clear();foreach(var record in await store.ListAsync<TeacherAvailability>())Records.Add(record);OnPropertyChanged(nameof(FilteredRecords));
+        Teachers.Clear();foreach(var teacher in (await store.ListAsync<Teacher>()).Where(t=>t.IsActive))Teachers.Add(teacher);
+        Records.Clear();foreach(var record in (await store.ListAsync<TeacherAvailability>()).Where(a=>Teachers.Any(t=>t.Id==a.TeacherId)))Records.Add(record);OnPropertyChanged(nameof(FilteredRecords));
     });
     [RelayCommand] private void New(){SelectedRecord=null;Reason="";Error="";}
     [RelayCommand] private void FullDay(){StartTime="00:00";EndTime="23:59";IsAvailable=false;}

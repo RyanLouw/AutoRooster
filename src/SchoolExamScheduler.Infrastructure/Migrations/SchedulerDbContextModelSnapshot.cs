@@ -178,6 +178,10 @@ namespace SchoolExamScheduler.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("ArchivedSnapshot")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<long>("CreatedOn")
                         .HasColumnType("INTEGER");
 

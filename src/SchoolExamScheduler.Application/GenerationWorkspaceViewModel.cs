@@ -30,7 +30,7 @@ public partial class GenerationWorkspaceViewModel(RosterWorkflow workflow,ILogge
         RequiredMinutes=request.ExamVenues.Where(x=>active.ContainsKey(x.ExamId)).Sum(x=>(long)x.RequiredInvigilatorCount*active[x.ExamId].Interval.Minutes);
         EligibleTeachers=request.Teachers.Count(x=>x.IsEligible);
         HandoverPolicy=request.Configuration.AllowSessionSplitting?$"Handovers enabled for every grade: minimum {request.Configuration.MinimumSessionMinutes} minutes per segment, up to {request.Configuration.MaximumSessionSegmentsPerPosition} segments per invigilator position.":"Handovers are disabled in the saved settings. To allow 30-minute sessions, open Settings and select Enable 30-minute handovers, then generate a new roster version.";
-        var issues=RequestValidator.Validate(request);ShowIssues(issues);
+        var issues=RequestValidator.Validate(request).ToList();if(request.Exams.Count==0)issues.Add(new("NoExams","Add the new series exams and venue allocations in Examinations."));ShowIssues(issues);
         Status=issues.Count==0?"Inputs validated. Hard constraints remain mandatory during generation.":"Correct the input issues before generation.";
         if(issues.Count>0)Error=string.Join(Environment.NewLine,issues.Select(x=>x.Message));
         OnPropertyChanged(nameof(AverageHours));Targets.Clear();
@@ -48,6 +48,12 @@ public partial class GenerationWorkspaceViewModel(RosterWorkflow workflow,ILogge
         }
         if(Result.Status is not (SchedulingStatus.Optimal or SchedulingStatus.Feasible or SchedulingStatus.Cancelled))Error=string.Join(Environment.NewLine,Result.Issues.Select(x=>x.Message));
     });
+    public void StartNewSeries()
+    {
+        LockedRosterId=null;Result=null;RosterName="Next examination series";Issues.Clear();Workloads.Clear();Targets.Clear();
+        ExaminationCount=0;PositionCount=0;RequiredMinutes=0;OnPropertyChanged(nameof(AverageHours));
+        Status="Add the next series' exams and venue allocations in Examinations, then return here to generate.";
+    }
     private void ShowTargets(SchedulingRequest request,FairnessStatistics fairness)
     {
         Targets.Clear();var teachers=request.Teachers.ToDictionary(t=>t.Id);

@@ -11,7 +11,7 @@ public partial class TeacherWorkspaceViewModel(ISchoolDataStore store,IUserDialo
     public ObservableCollection<Teacher> Teachers {get;}=[];
     public IEnumerable<Teacher> FilteredTeachers=>Teachers.Where(x=>!ActiveOnly || x.IsActive).Where(x=>$"{x.FirstName} {x.LastName} {x.EmployeeNumber}".Contains(Search,StringComparison.CurrentCultureIgnoreCase)).OrderBy(x=>x.LastName).ThenBy(x=>x.FirstName);
     [ObservableProperty] private string search="";
-    [ObservableProperty] private bool activeOnly;
+    [ObservableProperty] private bool activeOnly=true;
     [ObservableProperty] private Teacher? selectedTeacher;
     [ObservableProperty] private string firstName="";
     [ObservableProperty] private string lastName="";

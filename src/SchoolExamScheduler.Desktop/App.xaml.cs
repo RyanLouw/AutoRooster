@@ -44,6 +44,7 @@ public partial class App : System.Windows.Application
             builder.Services.AddTransient<ManualRosterService>();
             builder.Services.AddTransient<ReviewRosterViewModel>();
             builder.Services.AddTransient<ReportingService>();
+            builder.Services.AddTransient<ExamSeriesService>();
             builder.Services.AddSingleton<IReportExporter,FileReportExporter>();
             builder.Services.AddSingleton<IFileDialogs,FileDialogs>();
             builder.Services.AddTransient<ReportsViewModel>();

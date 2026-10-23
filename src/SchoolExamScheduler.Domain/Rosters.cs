@@ -10,9 +10,14 @@ public sealed class RosterVersion
     public int SchedulingSeed { get; private set; }
     public string AlgorithmVersion { get; private set; }
     public string SettingsSnapshot { get; private set; }
+    public string ArchivedSnapshot { get; private set; }="";
+    public bool IsArchived=>ArchivedSnapshot.Length>0;
+    public string DisplayName=>IsArchived?$"{Name} [archived]":Name;
+    public void Archive(string snapshot)
+    {if(IsArchived)throw new InvalidOperationException("This roster is already archived.");ArchivedSnapshot=Guard.Text(snapshot,nameof(snapshot));}
     public RosterVersion(string name,int schedulingSeed,string algorithmVersion,string settingsSnapshot)
     { Name=Guard.Text(name,nameof(Name));SchedulingSeed=schedulingSeed;AlgorithmVersion=Guard.Text(algorithmVersion,nameof(AlgorithmVersion));SettingsSnapshot=Guard.Text(settingsSnapshot,nameof(SettingsSnapshot)); }
-    public void EnsureEditable() { if(Status==RosterStatus.Finalized) throw new InvalidOperationException("Finalized rosters cannot be changed. Create a new version."); }
+    public void EnsureEditable() { if(IsArchived)throw new InvalidOperationException("This exam series is archived and read-only. Generate a roster for the new series.");if(Status==RosterStatus.Finalized) throw new InvalidOperationException("Finalized rosters cannot be changed. Create a new version."); }
     public void MarkValidated() { EnsureEditable();Status=RosterStatus.Validated; }
     public void MarkIncomplete() { EnsureEditable();Status=RosterStatus.Incomplete; }
     public void MarkDraft() { EnsureEditable();Status=RosterStatus.Draft; }

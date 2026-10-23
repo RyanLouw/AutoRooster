@@ -17,6 +17,13 @@ public partial class ReviewRosterViewModel(ISchoolDataStore store,ManualRosterSe
 {
     public override Task RefreshAsync()=>LoadCommand.IsRunning ? LoadCommand.ExecutionTask??Task.CompletedTask : LoadCommand.ExecuteAsync(null);
     public ObservableCollection<RosterVersion> Rosters {get;}=[];
+    public IEnumerable<RosterVersion> VisibleRosters=>Rosters.Where(r=>ShowPreviousSeries || !r.IsArchived);
+    [ObservableProperty] private bool showPreviousSeries;
+    partial void OnShowPreviousSeriesChanged(bool value)
+    {
+        OnPropertyChanged(nameof(VisibleRosters));
+        if(SelectedRoster is null || (!value && SelectedRoster.IsArchived))SelectedRoster=VisibleRosters.FirstOrDefault();
+    }
     public ObservableCollection<Teacher> Teachers {get;}=[];
     public ObservableCollection<DutyRow> Duties {get;}=[];
     public ObservableCollection<SchedulingIssue> Issues {get;}=[];
@@ -29,19 +36,21 @@ public partial class ReviewRosterViewModel(ISchoolDataStore store,ManualRosterSe
     [ObservableProperty] private string search="";
     public IEnumerable<DutyRow> FilteredDuties=>Duties.Where(x=>$"{x.Teacher} {x.Examination} {x.Venue} {x.Date}".Contains(Search,StringComparison.CurrentCultureIgnoreCase)).OrderBy(x=>x.Date).ThenBy(x=>x.Start).ThenBy(x=>x.Venue).ThenBy(x=>x.Position);
     partial void OnSearchChanged(string value)=>OnPropertyChanged(nameof(FilteredDuties));
+    public bool CanEdit=>SelectedRoster is {IsArchived:false} && SelectedRoster.Status!=RosterStatus.Finalized;
     private Guid Id=>SelectedRoster?.Id??throw new ArgumentException("Select a roster version.");
     private Guid DutyId=>SelectedDuty?.Id??throw new ArgumentException("Select a duty.");
     private Guid TeacherId=>ReplacementTeacher?.Id??throw new ArgumentException("Select a replacement teacher.");
     private bool loadingVersions;
     partial void OnSelectedRosterChanged(RosterVersion? value)
     {
+        OnPropertyChanged(nameof(CanEdit));
         if(!loadingVersions)LoadDutiesCommand.Execute(null);
     }
     [RelayCommand] private Task LoadAsync()=>RunAsync(async()=>
     {
         var selected=SelectedRoster?.Id;var versions=(await store.ListAsync<RosterVersion>()).OrderByDescending(x=>x.CreatedOn).ToArray();
         loadingVersions=true;
-        try{Rosters.Clear();foreach(var row in versions)Rosters.Add(row);SelectedRoster=Rosters.FirstOrDefault(x=>x.Id==selected)??Rosters.FirstOrDefault();}
+        try{Rosters.Clear();foreach(var row in versions)Rosters.Add(row);OnPropertyChanged(nameof(VisibleRosters));SelectedRoster=VisibleRosters.FirstOrDefault(x=>x.Id==selected)??VisibleRosters.FirstOrDefault();}
         finally{loadingVersions=false;}
         Teachers.Clear();foreach(var row in await store.ListAsync<Teacher>())Teachers.Add(row);
         await RefreshDutiesAsync();
@@ -52,6 +61,14 @@ public partial class ReviewRosterViewModel(ISchoolDataStore store,ManualRosterSe
         var id=SelectedRoster?.Id;Duties.Clear();Issues.Clear();SelectedDuty=null;SecondDuty=null;
         OnPropertyChanged(nameof(FilteredDuties));
         if(id is null){ValidationStatus="No roster versions available. Generate a roster first.";return;}
+        if(SelectedRoster!.IsArchived)
+        {
+            var snapshot=ArchivedRosterSnapshot.Read(SelectedRoster);
+            foreach(var row in snapshot.Report.Duties)Duties.Add(row);
+            foreach(var issue in snapshot.ValidationIssues)Issues.Add(issue);
+            ValidationStatus="Archived series — read-only. Duties, hours and validation results are preserved from when the series was finished.";
+            OnPropertyChanged(nameof(FilteredDuties));OnPropertyChanged(nameof(CanEdit));return;
+        }
         var request=await workflow.LoadRequestAsync(id.Value);
         var assignments=await store.ListAsync<InvigilationAssignment>();
         var validation=await service.ValidateAsync(id.Value);

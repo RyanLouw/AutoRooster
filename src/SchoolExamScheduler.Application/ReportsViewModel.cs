@@ -15,6 +15,13 @@ public partial class ReportsViewModel(ISchoolDataStore store,ReportingService se
 {
     public override Task RefreshAsync()=>LoadCommand.IsRunning ? LoadCommand.ExecutionTask??Task.CompletedTask : LoadCommand.ExecuteAsync(null);
     public ObservableCollection<RosterVersion> Rosters {get;}=[];
+    public IEnumerable<RosterVersion> VisibleRosters=>Rosters.Where(r=>ShowPreviousSeries || !r.IsArchived);
+    [ObservableProperty] private bool showPreviousSeries;
+    partial void OnShowPreviousSeriesChanged(bool value)
+    {
+        OnPropertyChanged(nameof(VisibleRosters));
+        if(SelectedRoster is null || (!value && SelectedRoster.IsArchived))SelectedRoster=VisibleRosters.FirstOrDefault();
+    }
     public ObservableCollection<Teacher> Teachers {get;}=[];
     public ObservableCollection<WorkloadChartRow> Workloads {get;}=[];
     [ObservableProperty] private RosterVersion? selectedRoster;
@@ -44,7 +51,7 @@ public partial class ReportsViewModel(ISchoolDataStore store,ReportingService se
         try
         {
             Rosters.Clear();foreach(var roster in versions)Rosters.Add(roster);
-            SelectedRoster=Rosters.FirstOrDefault(x=>x.Id==id)??Rosters.FirstOrDefault();
+            OnPropertyChanged(nameof(VisibleRosters));SelectedRoster=VisibleRosters.FirstOrDefault(x=>x.Id==id)??VisibleRosters.FirstOrDefault();
         }
         finally{loadingVersions=false;}
         Teachers.Clear();foreach(var teacher in await store.ListAsync<Teacher>())Teachers.Add(teacher);

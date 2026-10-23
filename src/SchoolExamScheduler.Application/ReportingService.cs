@@ -22,6 +22,7 @@ public sealed class ReportingService(ISchoolDataStore store,RosterWorkflow workf
     public async Task<ReportSnapshot> BuildAsync(Guid rosterId,CancellationToken cancellationToken=default)
     {
         var roster=(await store.ListAsync<RosterVersion>(cancellationToken)).Single(x=>x.Id==rosterId);
+        if(roster.IsArchived)return ArchivedRosterSnapshot.Read(roster).Report;
         var request=await workflow.LoadRequestAsync(rosterId,cancellationToken);
         var assignments=(await store.ListAsync<InvigilationAssignment>(cancellationToken)).Where(x=>x.RosterVersionId==rosterId && x.AssignmentStatus==AssignmentStatus.Assigned).ToArray();
         var teachers=request.Teachers.ToDictionary(x=>x.Id);var subjects=request.Subjects.ToDictionary(x=>x.Id);var venues=request.Venues.ToDictionary(x=>x.Id);var exams=request.Exams.ToDictionary(x=>x.Id);var allocations=request.ExamVenues.ToDictionary(x=>x.Id);
