@@ -1,3 +1,15 @@
+# Solver timeout fix — 23 October 2026
+
+Locked restore and the full Release solution build passed with zero warnings/errors. All **108 tests passed**, with none failed or skipped: Application 26, Domain 16, Infrastructure 20, Integration 5, Scheduling 41.
+
+The five-second 75-teacher sample with thirty-minute handovers reproduced `TimeLimitWithoutSolution` before the fix. It now returns a complete roster that passes the independent validator at both five- and thirty-second limits. These limits are regression scenarios, not a guarantee for every school or machine.
+
+Large split-enabled requests first try a smaller whole-exam feasibility model with up to 20% of the total budget. A valid result seeds the full split-enabled fairness search. Failure of that restricted model does not prove the full request infeasible: the solver falls back to the full model, including partial availability and locked handovers. Without an incumbent, the full model can use the remaining time for coverage before constructing fairness objectives. The shared clock includes seed search and model construction. No settings or hard constraints are relaxed.
+
+Regression coverage also exercises twenty-teacher requests requiring splits and exact off-grid locked handovers, so the seed cannot suppress required splitting. Windows GUI testing remains unavailable in this Linux environment.
+
+---
+
 # Report and handover update — 23 October 2026
 
 The full Release WPF cross-build passed with zero warnings/errors. All **106 tests executed and passed**, with zero failed or skipped: Application 26, Domain 16, Infrastructure 20, Integration 4, Scheduling 40. Machine-readable results are in `TestResults/reports-handovers-final` in the execution workspace.

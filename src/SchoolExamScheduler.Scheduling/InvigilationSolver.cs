@@ -9,13 +9,23 @@ public sealed class InvigilationSolver
     public Task<SchedulingResult> SolveAsync(SchedulingRequest request,CancellationToken cancellationToken=default) =>
         Task.Run(()=>Solve(request,cancellationToken),CancellationToken.None);
 
-    private static SchedulingResult Solve(SchedulingRequest request,CancellationToken cancellationToken)
+    private static SchedulingResult Solve(SchedulingRequest request,CancellationToken cancellationToken,bool wholeSessionsOnly=false,double? feasibilityBudget=null)
     {
         SchedulingResult Result(SchedulingStatus status,IReadOnlyList<ScheduledAssignment>? assignments=null,IReadOnlyList<SchedulingIssue>? issues=null) =>
             new(status,assignments??[],issues??[],status is SchedulingStatus.Optimal or SchedulingStatus.Feasible ? FairnessCalculator.Calculate(request,assignments??[]) : new FairnessStatistics([]));
         if(cancellationToken.IsCancellationRequested)return Result(SchedulingStatus.Cancelled);
         var issues=RequestValidator.Validate(request);
         if(issues.Count>0)return Result(SchedulingStatus.InvalidInput,issues:issues);
+        var clock=System.Diagnostics.Stopwatch.StartNew();
+        IReadOnlyList<ScheduledAssignment>? incumbent=null;
+        // A small whole-exam model often finds coverage quickly. Its result is only
+        // a seed: partial availability and locked handovers still use the full model.
+        if(!wholeSessionsOnly && request.Configuration.AllowSessionSplitting && request.Teachers.Count>=20)
+        {
+            var seed=Solve(request,cancellationToken,wholeSessionsOnly:true,feasibilityBudget:request.Configuration.SolverTimeLimitSeconds*0.2);
+            if(seed.Status is SchedulingStatus.Feasible or SchedulingStatus.Optimal && RosterValidator.Validate(request,seed.Assignments).Count==0)
+                incumbent=seed.Assignments;
+        }
         var model=new CpModel();var candidates=new List<Candidate>();
         var exams=request.Exams.ToDictionary(x=>x.Id);var settings=request.Configuration;
         var day=new TimeInterval(settings.DefaultDayStartTime,settings.DefaultDayEndTime);
@@ -27,7 +37,7 @@ public sealed class InvigilationSolver
             {
                 var positionCandidates=new List<Candidate>();
                 var boundaries=new SortedSet<TimeOnly>{exam.StartTime,exam.EndTime};
-                if(settings.AllowSessionSplitting)
+                if(settings.AllowSessionSplitting && !wholeSessionsOnly)
                 {
                     for(var minute=exam.StartTime.ToTimeSpan().TotalMinutes+settings.SchedulingTimeIncrementMinutes;minute<exam.EndTime.ToTimeSpan().TotalMinutes;minute+=settings.SchedulingTimeIncrementMinutes)
                         boundaries.Add(TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(minute)));
@@ -77,18 +87,25 @@ public sealed class InvigilationSolver
             model.Add(matching[0].Selected==1);
         }
         var solver=new CpSolver();using var registration=cancellationToken.Register(solver.StopSearch);
-        var clock=System.Diagnostics.Stopwatch.StartNew();
         CpSolverStatus status=CpSolverStatus.Unknown;
-        IReadOnlyList<ScheduledAssignment>? incumbent=null;
         bool allOptimal=true;
         // Solve pure feasibility before adding fairness auxiliaries. This provides an
         // independently checked incumbent even when later objective proofs take longer.
-        solver.StringParameters=$"linearization_level:2 symmetry_level:0 cp_model_probing_level:0 num_search_workers:1 random_seed:{Math.Max(0,settings.SchedulingSeed)} stop_after_first_solution:true max_time_in_seconds:{Math.Max(0.05,settings.SolverTimeLimitSeconds*0.25).ToString(CultureInfo.InvariantCulture)}";
-        try{status=solver.Solve(model);}
-        catch(Exception e) when(e is not OutOfMemoryException){return Result(SchedulingStatus.SolverError,issues:[new("SolverError",e.Message)]);}
-        if(status is CpSolverStatus.Optimal or CpSolverStatus.Feasible)
-            incumbent=candidates.Where(x=>solver.BooleanValue(x.Selected)).Select(x=>x.Assignment).ToArray();
-        if(status==CpSolverStatus.Infeasible)return Result(SchedulingStatus.Infeasible,issues:[new("Infeasible","No complete roster meets eligibility, coverage, availability, limits, breaks and locks. Review interacting constraints.")]);
+        if(incumbent is null)
+        {
+            var remaining=(feasibilityBudget??settings.SolverTimeLimitSeconds)-clock.Elapsed.TotalSeconds;
+            if(remaining>0)
+            {
+                solver.StringParameters=$"linearization_level:2 symmetry_level:0 cp_model_probing_level:0 num_search_workers:1 random_seed:{Math.Max(0,settings.SchedulingSeed)} stop_after_first_solution:true max_time_in_seconds:{remaining.ToString(CultureInfo.InvariantCulture)}";
+                try{status=solver.Solve(model);}
+                catch(Exception e) when(e is not OutOfMemoryException){return Result(SchedulingStatus.SolverError,issues:[new("SolverError",e.Message)]);}
+                if(status is CpSolverStatus.Optimal or CpSolverStatus.Feasible)
+                    incumbent=candidates.Where(x=>solver.BooleanValue(x.Selected)).Select(x=>x.Assignment).ToArray();
+                if(status==CpSolverStatus.Infeasible)return Result(SchedulingStatus.Infeasible,issues:[new("Infeasible","No complete roster meets eligibility, coverage, availability, limits, breaks and locks. Review interacting constraints.")]);
+            }
+        }
+        if(wholeSessionsOnly)
+            return incumbent is null ? Result(SchedulingStatus.TimeLimitWithoutSolution) : Result(SchedulingStatus.Feasible,incumbent);
         var targets=FairnessCalculator.Targets(request);
         var totalDemand=request.ExamVenues.Where(v=>exams[v.ExamId].IsActive).Sum(v=>(long)exams[v.ExamId].Interval.Minutes*v.RequiredInvigilatorCount);
         if(totalDemand>1_000_000)return Result(SchedulingStatus.InvalidInput,issues:[new("SizeLimit","Demand is too large for safe fixed-point objective arithmetic.")]);

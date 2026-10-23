@@ -12,6 +12,7 @@ public sealed class SplittingTests
     [Theory]
     [InlineData(1)]
     [InlineData(2)]
+    [InlineData(10)]
     public async Task SplitSessionsCoverEachIndependentPositionWithoutGaps(int positions)
     {
         var r=SplitRequest(positions);var result=await new InvigilationSolver().SolveAsync(r);
@@ -29,7 +30,7 @@ public sealed class SplittingTests
     [Fact]
     public async Task OffGridExamAndLockedBoundariesArePreservedExactly()
     {
-        var r=ValidationTests.Request();var exam=new Exam(r.Subjects[0].Id,8,r.Exams[0].ExamDate,new(8,7),new(10,13));
+        var r=ValidationTests.Request(20);var exam=new Exam(r.Subjects[0].Id,8,r.Exams[0].ExamDate,new(8,7),new(10,13));
         var allocation=new ExamVenue(exam.Id,r.Venues[0].Id,30,1);
         var locked=new ScheduledAssignment(allocation.Id,r.Teachers[0].Id,0,new(8,7),new(9,10));
         r=r with{Exams=[exam],ExamVenues=[allocation],LockedAssignments=[locked]};
