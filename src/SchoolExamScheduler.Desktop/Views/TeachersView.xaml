@@ -13,7 +13,7 @@
 <TextBlock Text="Period maximum minutes (blank = no limit)"/><TextBox Text="{Binding MaximumPeriodMinutes,ValidatesOnExceptions=True}"/>
 <CheckBox Content="Active" IsChecked="{Binding IsActive}"/><CheckBox Content="Can invigilate" IsChecked="{Binding CanInvigilate}"/>
 <TextBlock Text="Notes"/><TextBox Text="{Binding Notes}" AcceptsReturn="True" MinHeight="50"/>
-<WrapPanel><Button Content="New teacher" Command="{Binding NewCommand}"/><Button Content="Save teacher" Command="{Binding SaveCommand}"/><Button Content="Deactivate" Command="{Binding DeactivateCommand}"/></WrapPanel>
+<WrapPanel><Button Content="New teacher" Command="{Binding NewCommand}"/><Button Style="{StaticResource LicensedAction}" Content="Save teacher" Command="{Binding SaveCommand}"/><Button Content="Deactivate" Command="{Binding DeactivateCommand}"/></WrapPanel>
 </StackPanel></ScrollViewer></Grid>
 <StackPanel Grid.Row="2"><ProgressBar IsIndeterminate="{Binding IsBusy}" Height="3"/><TextBlock Text="{Binding Error}" Foreground="#B42318" TextWrapping="Wrap"/></StackPanel>
 </Grid></UserControl>

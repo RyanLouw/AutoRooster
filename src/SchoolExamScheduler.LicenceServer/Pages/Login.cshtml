@@ -1,0 +1,3 @@
+@page
+@model SchoolExamScheduler.LicenceServer.Pages.LoginModel
+<h2>Owner sign in</h2><div asp-validation-summary="All" class="error"></div><form method="post" asp-antiforgery="true"><label>Username<input asp-for="Username" autocomplete="username" required maxlength="64"/></label><label>Password<input asp-for="Password" type="password" autocomplete="current-password" required maxlength="1024"/></label><button>Sign in</button></form>

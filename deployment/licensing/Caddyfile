@@ -1,0 +1,7 @@
+{
+    email {$OWNER_EMAIL}
+}
+{$LICENCE_DOMAIN} {
+    encode gzip
+    reverse_proxy licence-server:8080
+}

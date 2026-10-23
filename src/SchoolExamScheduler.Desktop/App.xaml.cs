@@ -4,6 +4,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using SchoolExamScheduler.Application;
 using SchoolExamScheduler.Infrastructure;
+using SchoolExamScheduler.Licensing;
 
 namespace SchoolExamScheduler.Desktop;
 
@@ -30,7 +31,11 @@ public partial class App : System.Windows.Application
                 var sample=DemoDataFactory.CreateRealistic(42,DateOnly.FromDateTime(DateTime.Today).AddDays(7));
                 await store.CommitAsync(sample.Records,[]);
             }
-            builder.Services.AddSingleton<ISchoolDataStore>(store);
+            var licenceClient=new LicenceClient(new System.Net.Http.HttpClient(),LicenceConfiguration.Load(),new FileActivationStore(System.IO.Path.Combine(dataDirectory,"activation.json")));
+            builder.Services.AddSingleton<ILicenceService>(licenceClient);
+            builder.Services.AddSingleton<ILicenceGate>(licenceClient);
+            builder.Services.AddSingleton<SubscriptionViewModel>();
+            builder.Services.AddSingleton<ISchoolDataStore>(new LicensedSchoolDataStore(store,licenceClient));
             builder.Services.AddSingleton<IDemoLauncher,DemoLauncher>();
             builder.Services.AddSingleton<IDatabaseMaintenance>(new DatabaseMaintenance(databasePath,access));
             builder.Services.AddSingleton<IUserDialogs,UserDialogs>();

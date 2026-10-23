@@ -4,3 +4,11 @@ TestResults/
 artifacts/
 .vs/
 *.user
+
+# Licence server private state and developer client configuration
+licence-data/
+licensing.local.json
+server-settings.json
+signing-key.pem
+activation.json
+.env

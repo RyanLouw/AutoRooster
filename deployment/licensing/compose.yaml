@@ -1,0 +1,39 @@
+services:
+  licence-server:
+    build:
+      context: ../..
+      dockerfile: deployment/licensing/Dockerfile
+    restart: unless-stopped
+    environment:
+      Licensing__KnownProxy: 172.30.0.2
+    volumes:
+      - licence-data:/data
+    networks:
+      licences:
+        ipv4_address: 172.30.0.3
+    # Do not publish this port: HTTPS comes through Caddy.
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    environment:
+      LICENCE_DOMAIN: ${LICENCE_DOMAIN:?Set LICENCE_DOMAIN in .env}
+      OWNER_EMAIL: ${OWNER_EMAIL:?Set OWNER_EMAIL in .env}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    networks:
+      licences:
+        ipv4_address: 172.30.0.2
+networks:
+  licences:
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24
+volumes:
+  licence-data:
+  caddy-data:
+  caddy-config:

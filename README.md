@@ -103,3 +103,7 @@ Intervals are half-open `[start,end)`. Times use whole minutes; cross-midnight e
 See [validation evidence](docs/Validation.md) and [Windows acceptance checklist](docs/WindowsAcceptance.md). Linux build/test and Windows package creation do not establish successful Windows startup or visual usability. Complete the Windows checks before deploying to school staff.
 
 The full requested specification is retained in [Requirements.md](docs/Requirements.md). Dependency license metadata and font notices accompany the source; PDFsharp is deliberately pinned to MIT-licensed 6.2.4.
+
+### Manual subscription server
+
+The `marketing` branch adds owner-managed bank-payment licences and a 24-hour signed offline allowance. See [setup, local testing and deployment](docs/LICENSING.md). The desktop starts read-only until its licensing server is configured and a school licence activated.

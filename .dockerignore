@@ -1,0 +1,14 @@
+.git
+**/bin
+**/obj
+TestResults
+artifacts
+licence-data
+**/licensing.local.json
+**/server-settings.json
+**/signing-key.pem
+**/activation.json
+**/.env
+**/*.db
+**/*.db-shm
+**/*.db-wal

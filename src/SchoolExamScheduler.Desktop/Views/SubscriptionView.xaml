@@ -1,0 +1,12 @@
+<UserControl x:Class="SchoolExamScheduler.Desktop.Views.SubscriptionView" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+<ScrollViewer VerticalScrollBarVisibility="Auto"><StackPanel Margin="24" MaxWidth="720" HorizontalAlignment="Left">
+<TextBlock Text="School subscription" FontSize="24"/><TextBlock Text="{Binding State.Message}" TextWrapping="Wrap" Margin="4,12" FontSize="16"/>
+<TextBlock Text="{Binding State.School}" FontSize="18"/><TextBlock Text="Paid through (South African date)" Margin="4,12,4,0"/><TextBlock Text="{Binding PaidThrough}"/>
+<TextBlock Text="Current offline allowance ends (this computer's time)" Margin="4,12,4,0"/><TextBlock Text="{Binding OfflineUntil}"/>
+<TextBlock Text="School licence key" Margin="4,16,4,0"/><TextBox Text="{Binding LicenceKey,UpdateSourceTrigger=PropertyChanged}" MinWidth="450"/>
+<WrapPanel><Button Content="Activate school licence" Command="{Binding ActivateCommand}"/><Button Content="Refresh subscription" Command="{Binding RefreshCommand}"/></WrapPanel>
+<TextBlock Text="Payment instructions" FontSize="18" Margin="4,20,4,8"/><TextBlock Text="{Binding State.PaymentInstructions}" TextWrapping="Wrap"/><TextBlock Text="Bank payment reference" Margin="4,12,4,0"/><TextBox Text="{Binding State.PaymentReference,Mode=OneWay}" IsReadOnly="True"/>
+<TextBlock Text="The supplier extends access after confirming your bank payment. Contact the supplier if a payment has not yet been recorded. Existing rosters, PDF and Excel exports remain available when a subscription expires." TextWrapping="Wrap" Margin="4,16"/>
+<TextBlock Text="An internet connection is needed to activate. After a successful check, you can work offline for up to 24 hours, ending sooner at your paid-through date. A disabled licence takes effect at the next online check or when this allowance ends." TextWrapping="Wrap" Margin="4,8"/>
+<TextBlock Text="{Binding Error}" Foreground="#B42318" TextWrapping="Wrap"/><TextBlock Text="{Binding ServerAddress}" Foreground="#536174" Margin="4,16"/>
+</StackPanel></ScrollViewer></UserControl>

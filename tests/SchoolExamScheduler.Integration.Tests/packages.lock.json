@@ -618,6 +618,7 @@
           "CommunityToolkit.Mvvm": "[8.4.2, )",
           "Microsoft.Extensions.Hosting": "[10.0.13, )",
           "SchoolExamScheduler.Domain": "[1.0.0, )",
+          "SchoolExamScheduler.Licensing": "[1.0.0, )",
           "SchoolExamScheduler.Scheduling": "[1.0.0, )"
         }
       },
@@ -634,6 +635,9 @@
           "SchoolExamScheduler.Scheduling": "[1.0.0, )",
           "System.Security.Cryptography.Pkcs": "[10.0.13, )"
         }
+      },
+      "schoolexamscheduler.licensing": {
+        "type": "Project"
       },
       "schoolexamscheduler.scheduling": {
         "type": "Project",

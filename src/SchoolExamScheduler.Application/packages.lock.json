@@ -339,6 +339,9 @@
       "schoolexamscheduler.domain": {
         "type": "Project"
       },
+      "schoolexamscheduler.licensing": {
+        "type": "Project"
+      },
       "schoolexamscheduler.scheduling": {
         "type": "Project",
         "dependencies": {

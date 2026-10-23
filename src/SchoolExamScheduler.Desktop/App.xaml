@@ -4,4 +4,5 @@
 <Style TargetType="ComboBox"><Setter Property="Margin" Value="4,3,4,8"/><Setter Property="Padding" Value="6"/></Style>
 <Style TargetType="CheckBox"><Setter Property="Margin" Value="4,6"/></Style>
 <Style TargetType="DataGrid"><Setter Property="RowHeight" Value="34"/><Setter Property="GridLinesVisibility" Value="Horizontal"/></Style>
+<Style x:Key="LicensedAction" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}"><Setter Property="IsEnabled" Value="{Binding DataContext.Subscription.CanWrite,RelativeSource={RelativeSource AncestorType=Window}}"/></Style>
 </Application.Resources></Application>

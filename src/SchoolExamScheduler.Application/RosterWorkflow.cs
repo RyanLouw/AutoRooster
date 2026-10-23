@@ -1,8 +1,9 @@
 using System.Text.Json;
+using SchoolExamScheduler.Licensing;
 using SchoolExamScheduler.Domain;
 using SchoolExamScheduler.Scheduling;
 namespace SchoolExamScheduler.Application;
-public sealed class RosterWorkflow(ISchoolDataStore store,InvigilationSolver solver)
+public sealed class RosterWorkflow(ISchoolDataStore store,InvigilationSolver solver,ILicenceGate? licence=null)
 {
     public Guid? LastCreatedRosterId {get;private set;}
     public async Task<SchedulingRequest> LoadRequestAsync(Guid? lockedRosterId=null,CancellationToken cancellationToken=default)
@@ -23,6 +24,7 @@ public sealed class RosterWorkflow(ISchoolDataStore store,InvigilationSolver sol
     }
     public async Task<SchedulingResult> GenerateAsync(string name,Guid? lockedRosterId,CancellationToken cancellationToken=default)
     {
+        if(licence is not null)await licence.RequireWriteAccessAsync(cancellationToken);
         LastCreatedRosterId=null;
         if(cancellationToken.IsCancellationRequested)return new(SchedulingStatus.Cancelled,[],[],new([]));
         if(lockedRosterId is not null)

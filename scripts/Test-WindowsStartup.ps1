@@ -18,7 +18,7 @@ try {
     $pattern = $window.GetCurrentPattern([System.Windows.Automation.TransformPattern]::Pattern)
     foreach ($size in @(@(1366,768), @(1920,1080))) {
         $pattern.Resize($size[0], $size[1])
-        foreach ($name in @('Teachers','Teacher Availability','Subjects','Venues','Examinations','Generate Roster','Review Roster','Dashboard / Reports','Settings')) {
+        foreach ($name in @('Teachers','Teacher Availability','Subjects','Venues','Examinations','Generate Roster','Review Roster','Dashboard / Reports','Settings','Subscription')) {
             $condition = New-Object System.Windows.Automation.AndCondition @(
                 (New-Object System.Windows.Automation.PropertyCondition ([System.Windows.Automation.AutomationElement]::ControlTypeProperty), ([System.Windows.Automation.ControlType]::TabItem)),
                 (New-Object System.Windows.Automation.PropertyCondition ([System.Windows.Automation.AutomationElement]::NameProperty), $name)
