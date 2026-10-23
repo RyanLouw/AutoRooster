@@ -32,6 +32,12 @@ public partial class ReferenceDataViewModel(ISchoolDataStore store,ILogger<Refer
         Venues.Clear();foreach(var row in await store.ListAsync<Venue>())Venues.Add(row);
         VenueRestrictions.Clear();foreach(var row in await store.ListAsync<VenueUnavailability>())VenueRestrictions.Add(row);OnPropertyChanged(nameof(VisibleVenueRestrictions));
     });
+    [RelayCommand] private Task AddSubjectCatalogueAsync()=>RunAsync(async()=>
+    {
+        var existing=await store.ListAsync<Subject>();
+        var added=SchoolSubjectCatalogue.Items.Where(s=>!existing.Any(e=>string.Equals(e.SubjectCode,s.Code,StringComparison.OrdinalIgnoreCase)||string.Equals(e.Name,s.Name,StringComparison.OrdinalIgnoreCase))).Select(s=>new Subject(s.Name,s.Code)).ToArray();
+        await store.CommitAsync(added,[]);await LoadCommand.ExecuteAsync(null);
+    });
     [RelayCommand] private void NewSubject(){SelectedSubject=null;SubjectName="";SubjectCode="";SubjectActive=true;}
     [RelayCommand] private void NewVenue(){SelectedVenue=null;VenueName="";Capacity=30;VenueActive=true;VenueNotes="";}
     [RelayCommand] private Task SaveSubjectAsync()=>RunAsync(async()=>

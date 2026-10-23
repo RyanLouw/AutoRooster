@@ -3,7 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
 using SchoolExamScheduler.Domain;
 namespace SchoolExamScheduler.Application;
-public partial class SettingsViewModel(ISchoolDataStore store,IDatabaseMaintenance maintenance,IFileDialogs files,IUserDialogs dialogs,ILogger<SettingsViewModel> logger) : WorkspaceViewModel(logger)
+public partial class SettingsViewModel(ISchoolDataStore store,IDatabaseMaintenance maintenance,IFileDialogs files,IUserDialogs dialogs,ILogger<SettingsViewModel> logger,IDemoLauncher? demoLauncher=null) : WorkspaceViewModel(logger)
 {
     public override Task RefreshAsync()=>LoadCommand.IsRunning ? LoadCommand.ExecutionTask??Task.CompletedTask : LoadCommand.ExecuteAsync(null);
     [ObservableProperty] private SchedulingSettings settings=new();
@@ -27,6 +27,11 @@ public partial class SettingsViewModel(ISchoolDataStore store,IDatabaseMaintenan
         var path=await files.OpenPathAsync("Choose a scheduler database backup","SQLite backup|*.db");if(path is null)return;
         if(!await dialogs.ConfirmAsync("Restore this backup and replace the current database? A recovery copy will be retained. The application will close after restore; reopen it to load the restored data."))return;
         await maintenance.RestoreAsync(path,true);Status="Database restored. Reopen the application.";DatabaseRestored?.Invoke();
+    });
+    [RelayCommand] private Task OpenRealisticDemoAsync()=>RunAsync(async()=>
+    {
+        if(demoLauncher is null)throw new InvalidOperationException("The demo launcher is only available in the Desktop application.");
+        await demoLauncher.OpenAsync();Status="Opened the realistic test school in a separate window and database.";
     });
     [RelayCommand] private Task SampleDataAsync()=>RunAsync(async()=>
     {

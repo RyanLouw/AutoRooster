@@ -6,6 +6,18 @@ using Xunit;
 public sealed class GenerationTests
 {
     [Fact]
+    public async Task TargetPreviewRecalculatesAfterResponsibilityAndAvailabilityChanges()
+    {
+        var demo=DemoDataFactory.Create(42,new(2026,12,1));var store=new ExaminationWorkspaceTests.Store();store.Items.AddRange(demo.Records);
+        var vm=new GenerationWorkspaceViewModel(new RosterWorkflow(store,new InvigilationSolver()),NullLogger<GenerationWorkspaceViewModel>.Instance);
+        await vm.RefreshAsync();Assert.Equal(75,vm.Targets.Count);Assert.Equal(200.0/75,vm.AverageHours,5);
+        var teacher=demo.Request.Teachers[41];var previous=vm.Targets.Single(t=>t.TeacherId==teacher.Id).TargetHours;
+        teacher.WorkloadWeight=0.5m;await vm.RefreshAsync();Assert.True(vm.Targets.Single(t=>t.TeacherId==teacher.Id).TargetHours<previous);
+        foreach(var date in demo.Request.Exams.Select(e=>e.ExamDate).Distinct())store.Items.Add(new TeacherAvailability(teacher.Id,date,new(7,0),new(17,0),false));
+        await vm.RefreshAsync();Assert.Equal(0,vm.Targets.Single(t=>t.TeacherId==teacher.Id).TargetHours);
+        Assert.Equal(200,vm.Targets.Sum(t=>t.TargetHours),5);Assert.Empty(vm.Error);
+    }
+    [Fact]
     public async Task GenerateCommandPersistsValidatedVersionAndDuties()
     {
         var store=new ExaminationWorkspaceTests.Store();var teacher=new Teacher("A","B");var subject=new Subject("Maths","M");var venue=new Venue("A1",30);var exam=new Exam(subject.Id,8,new(2026,12,10),new(8,0),new(10,0));var allocation=new ExamVenue(exam.Id,venue.Id,30,1);

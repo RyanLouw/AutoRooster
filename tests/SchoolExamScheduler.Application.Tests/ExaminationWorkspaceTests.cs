@@ -14,6 +14,16 @@ public sealed class ExaminationWorkspaceTests
         {foreach(var d in deletes)Items.Remove(d);foreach(var s in saves)if(!Items.Contains(s))Items.Add(s);return Task.CompletedTask;}
     }
     [Fact]
+    public async Task CatalogueCanBeAddedRepeatedlyWithoutReplacingSchoolSubjects()
+    {
+        var store=new Store();var subject=new Subject("Our Mathematics","MATH");store.Items.Add(subject);
+        var vm=new ReferenceDataViewModel(store,NullLogger<ReferenceDataViewModel>.Instance);
+        await vm.AddSubjectCatalogueCommand.ExecuteAsync(null);var count=vm.Subjects.Count;
+        await vm.AddSubjectCatalogueCommand.ExecuteAsync(null);
+        Assert.Empty(vm.Error);Assert.True(count>=35);Assert.Equal(count,vm.Subjects.Count);
+        Assert.Equal(subject.Id,Assert.Single(vm.Subjects,s=>s.SubjectCode=="MATH").Id);Assert.Equal("Our Mathematics",subject.Name);
+    }
+    [Fact]
     public async Task ExamFormSavesMultipleVenuesAndRejectsConflictsAndOverCapacity()
     {
         var store=new Store();var subject=new Subject("Maths","M");var a=new Venue("A",30);var b=new Venue("B",30);store.Items.AddRange([subject,a,b]);

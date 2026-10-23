@@ -33,13 +33,35 @@ Publishing creates a self-contained `artifacts/win-x64` folder. Copy the **entir
 3. In Teacher Availability, enter dates, partial-day restrictions or full-day leave. By default, teachers are available within the examination-day window. Positive entries restrict availability to their union on that date; unavailability always wins.
 4. Create each examination with its grade, subject, date and exact same-day times. Add all venues and edit student/supervisor counts. The application prevents over-capacity and conflicting venue allocations.
 5. Validate inputs and generate the complete period. Generation runs away from the UI thread and can be cancelled. Review diagnostics when no complete roster is found; hard constraints are never relaxed automatically.
-6. Refresh versions in Review Roster, select a version, and load/validate it. Replace or swap teachers, split or combine duties, lock/unlock, remove unlocked duties, or regenerate into a new version. Missing coverage keeps a roster incomplete. Finalization validates coverage and makes a version read-only. Unlock a duty before editing it.
-7. Refresh and load a version in Dashboard / Reports. Review teacher minutes, targets, coverage, and calendar filters. Export a complete Excel workbook or a full, individual-teacher, workload or venue PDF. Select a teacher before exporting an individual PDF. Choose new filenames: existing exports are preserved.
+6. Open Review Roster and select a version; its duties and validation load automatically. Replace or swap teachers, split or combine duties, lock/unlock, remove unlocked duties, or regenerate into a new version. Missing coverage keeps a roster incomplete. Finalization validates coverage and makes a version read-only. Unlock a duty before editing it.
+7. Open Dashboard / Reports and select a version; its report loads automatically. Review teacher minutes, targets, coverage, and calendar filters. Export a complete Excel workbook or a full, individual-teacher, workload or venue PDF. Select a teacher before exporting an individual PDF. Choose new filenames: existing exports are preserved.
 8. Create backups in Settings. Restore validates the backup, requires confirmation, retains a recovery copy, and closes the application so stale forms cannot write to restored data. Reopen after restoring.
 
-Refresh a screen after adding related records elsewhere. Historical exams with assignments cannot be modified; copy them to retain roster history. Deactivated teachers' historical duties remain in reports.
+Screens refresh automatically when opened after adding related records elsewhere. Historical exams with assignments cannot be modified; copy them to retain roster history. Deactivated teachers' historical duties remain in reports.
 
 For an empty database, Settings offers **Create sample school**, with confirmation. This creates 75 teachers, grades 8–12, overlapping exams, weights and leave across ten dates, using seed 42. It does not run automatically. Tests also include a deliberately infeasible sample.
+
+## Realistic demo and fair teacher-hour targets
+
+Use **Settings → Open realistic demo (separate database)**. This opens another Desktop window with its own saved database, `demo-school-exams.db`; your normal school data is untouched. You can also run `SchoolExamScheduler.Desktop.exe --demo`. The first opening seeds 75 uniquely named teachers, 49 configurable subjects, Grades 8–12, varied exam lengths, multiple simultaneous invigilators per room, leave, partial availability and reduced workload weights. Later openings preserve your test edits. This is a broad South African secondary-school starting catalogue, not a claim about every school's curriculum. **Subjects → Add school subject catalogue** adds missing catalogue subjects to your school without replacing existing subjects; rename, add or deactivate entries as needed.
+
+1. In the demo, open **Generate Roster**. **Teacher hour targets** shows the period's equal-share average and each teacher's adjusted target before generation.
+2. Generate a baseline. Review assigned hours beside targets, unused available teachers and the largest relative deviation. A complete result may be feasible without being mathematically optimal.
+3. In **Teacher Availability**, mark a teacher unavailable on a date (or part of a day), give a reason and save. Positive availability entries restrict that date; negative entries take precedence.
+4. In **Teachers**, give a teacher with other responsibilities a weight such as **0.5** instead of **1.0**, explain the responsibility in Notes and save. A lower weight reduces their proportional share; it does not exempt them. Use eligibility to exempt a teacher entirely, or daily/period limits for hard caps.
+5. Return to Generate Roster: targets recalculate automatically. Generate a **new version** to redistribute actual duties and compare the reports. Existing rosters remain available for comparison.
+
+Targets divide required supervision using workload weight × available capacity, cap each teacher's target at their capacity, and redistribute excess among remaining teachers. A fully unavailable teacher gets a zero target. Exact target hours may be impossible because of coverage, locks, breaks and allowed segment lengths. The scheduler improves a complete starting roster using constraint-checked reassignments and handovers, then continues CP-SAT optimisation; full-model search cannot worsen that starting roster's primary fairness bound.
+
+## Final manual adjustments in Excel
+
+Choose **Export Excel workbook**, or obtain `Reports.xlsx` from **Export ALL reports (ZIP)**. No Excel installation is needed to create it; use Excel to make final manual changes.
+
+- Read **Start here**, then edit the blue teacher dropdowns in **Editable roster**. Employee numbers or unique IDs distinguish teachers sharing a name. Swap two duties by changing both teacher cells.
+- **Editable hours** recalculates totals, daily hours and differences from the exported targets. Changing blue Start/End cells also updates durations. Check messages flag invalid times, unknown teachers and teacher overlaps/short breaks.
+- Keep the date, venue, position and times when simply swapping teachers. If you change times, review continuity yourself. The Excel checks do not validate leave, limits, locks or complete coverage.
+- The other report sheets remain the original snapshots for comparison. Edit existing rows only; adding/deleting rows or overwriting formulas can break the calculations. Keep Excel calculation set to Automatic and save a copy.
+- Excel changes are **final manual adjustments only** and do not import into the app. To recalculate targets or produce matching app/PDF reports, change availability/weights in the app, generate a new version and export again.
 
 ## Teacher hours, timelines and all-report export
 
@@ -47,7 +69,7 @@ In **Settings**, choose **Enable 30-minute handovers (all grades)** and confirm.
 
 In an examination's venue allocation, **Invigilators at once** is the number of teachers who must be present simultaneously. A value of 2 requires two independently covered positions. A handover changes the teacher within one position: for example, teacher A at 08:00–08:30 followed by teacher B at 08:30–09:00. Fairness and availability can lead the solver to split sessions; it does not force a handover in every exam when one is unnecessary. A 30-minute duty is 0.50 hours, not 0.30 hours.
 
-In **Dashboard / Reports**, refresh versions, select the new version and load it:
+In **Dashboard / Reports**, select the new version; its report loads automatically:
 
 - **Export teacher hours (PDF)** gives every teacher's total hours, `hh:mm` total, target and duty count across the selected examination period, including teachers with no assigned duties.
 - **All teacher timetables** gives each teacher's dated duties, venue, simultaneous position, exact handover times, duration, hours and split/whole-exam status.

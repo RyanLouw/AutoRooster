@@ -43,3 +43,14 @@ ClosedXML 0.105.1 writes typed spreadsheet dates and times without Excel. PDFsha
 ## Windows native runtime prerequisite
 
 PE import inspection of the OR-Tools Windows DLLs confirms dependencies on MSVCP140.dll, VCRUNTIME140.dll and VCRUNTIME140_1.dll, in addition to the packaged solver DLLs and Windows system libraries. A self-contained .NET deployment does not itself supply these VC runtime names. scripts/Publish-Windows.ps1 downloads Microsoft's x64 redistributable and verifies its Authenticode signature on Windows before including it. The cloud download returned HTTP 403 from download.visualstudio.microsoft.com; a domain addition has been saved in the environment draft. No redistributable or Windows signature-validation step is claimed as completed in the Linux package.
+
+
+## Fair starting rosters and target caps
+
+The solver keeps its compact whole-exam feasibility seed for large split-enabled requests. Before full CP-SAT fairness optimisation, a bounded incumbent-improvement pass tries deterministic teacher reassignments and valid handovers. Moves must improve the lexicographic workload score (worst relative deviation, total absolute deviation, unused teachers, squared relative deviation, segment count). Eligibility, positive/negative availability, daily/period limits, rest time, exact locks, minimum segment length and segment count remain mandatory. Transfers preserve coverage of the original position; an independent validator checks the final incumbent before use. This is a warm start, not a replacement for the period-wide CP-SAT model or a claim of global optimality. The full model receives the incumbent as hints plus a bound preventing regression in its primary fairness objective.
+
+Capacity-weighted targets now use capped redistribution: assign required teacher-minutes proportionally to weight × capacity, cap shares exceeding a teacher's capacity, then redistribute the remainder across other teachers. If total capacity is insufficient, targets saturate at capacity; target arithmetic does not establish feasibility. Capacity counts the union of demanded wall-clock minutes and applies teacher limits, while the independent scheduling model also handles rest and indivisible segments.
+
+The realistic demonstration is seeded only in the separate `demo-school-exams.db` selected by the explicit `--demo` argument. The normal database is not populated or replaced by this action. The 49-subject catalogue is optional and configurable; adding it is idempotent and preserves matching school subject codes/names.
+
+Editable Excel worksheets are a separate final-adjustment projection. Teacher choices include stable identifiers, calculations refer to edited rows, and simple overlap/time checks are clearly labelled as partial checks. Original report worksheets remain snapshots. Excel changes do not import into the app, modify roster history, recalculate app targets, or replace independent hard-constraint validation.

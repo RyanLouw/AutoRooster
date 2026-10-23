@@ -16,14 +16,22 @@ public partial class App : System.Windows.Application
         base.OnStartup(e);
         try
         {
-            var builder = Host.CreateApplicationBuilder(e.Args);
+            var demoMode=e.Args.Contains("--demo",StringComparer.OrdinalIgnoreCase);
+            var builder = Host.CreateApplicationBuilder(e.Args.Where(a=>!string.Equals(a,"--demo",StringComparison.OrdinalIgnoreCase)).ToArray());
             builder.Services.AddSchedulerApplication();
             var dataDirectory=System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"SchoolExamScheduler");
-            var databasePath=System.IO.Path.Combine(dataDirectory,"school-exams.db");
+            var databasePath=System.IO.Path.Combine(dataDirectory,demoMode?"demo-school-exams.db":"school-exams.db");
             builder.Logging.AddProvider(new JsonFileLoggerProvider(System.IO.Path.Combine(dataDirectory,"logs")));
             await using(var database=SchedulerDbContext.Open(databasePath))await database.InitializeAsync();
             var access=new DatabaseAccess();
-            builder.Services.AddSingleton<ISchoolDataStore>(new SchoolDataStore(databasePath,access));
+            var store=new SchoolDataStore(databasePath,access);
+            if(demoMode && (await store.ListAsync<SchoolExamScheduler.Domain.Teacher>()).Count==0)
+            {
+                var sample=DemoDataFactory.CreateRealistic(42,DateOnly.FromDateTime(DateTime.Today).AddDays(7));
+                await store.CommitAsync(sample.Records,[]);
+            }
+            builder.Services.AddSingleton<ISchoolDataStore>(store);
+            builder.Services.AddSingleton<IDemoLauncher,DemoLauncher>();
             builder.Services.AddSingleton<IDatabaseMaintenance>(new DatabaseMaintenance(databasePath,access));
             builder.Services.AddSingleton<IUserDialogs,UserDialogs>();
             builder.Services.AddTransient<TeacherWorkspaceViewModel>();
@@ -45,6 +53,7 @@ public partial class App : System.Windows.Application
             await host.StartAsync();
             host.Services.GetRequiredService<ILogger<App>>().LogInformation("Application started");
             MainWindow = host.Services.GetRequiredService<MainWindow>();
+            if(demoMode)MainWindow.Title+=" — DEMO (separate database)";
             MainWindow.Show();
         }
         catch (Exception exception)

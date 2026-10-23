@@ -5,6 +5,8 @@ public sealed record UnfilledDuty(DateOnly Date,string Examination,string Venue,
 {public int Minutes=>(int)(End.ToTimeSpan()-Start.ToTimeSpan()).TotalMinutes;}
 public sealed record ReportSnapshot(string SchoolName,string Period,string RosterName,RosterStatus Status,int TotalTeachers,int EligibleTeachers,int TotalExams,int TotalVenues,long RequiredMinutes,IReadOnlyList<DutyRow> Duties,IReadOnlyList<UnfilledDuty> Unfilled,FairnessStatistics Fairness,IReadOnlyDictionary<Guid,string> TeacherNames)
 {
+    public IReadOnlyDictionary<Guid,string> TeacherCodes {get;init;}=new Dictionary<Guid,string>();
+    public int MinimumBreakMinutes {get;init;}
     public int AssignedMinutes=>Duties.Sum(x=>x.Minutes);
     public IReadOnlyList<DateOnly> Dates=>Duties.Select(x=>x.Date).Concat(Unfilled.Select(x=>x.Date)).Distinct().Order().ToArray();
     public IReadOnlyList<TeacherHoursRow> TeacherHours=>TeacherNames.OrderBy(x=>x.Value,StringComparer.CurrentCulture).ThenBy(x=>x.Key).Select(t=>
@@ -45,7 +47,7 @@ public sealed class ReportingService(ISchoolDataStore store,RosterWorkflow workf
             }
         }
         var dates=request.Exams.Where(x=>x.IsActive).Select(x=>x.ExamDate).Order().ToArray();
-        return new(request.Configuration.SchoolName,dates.Length==0?"No examinations":$"{dates[0]:dd MMM yyyy} – {dates[^1]:dd MMM yyyy}",roster.Name,roster.Status,teachers.Count,teachers.Values.Count(x=>x.IsEligible),request.Exams.Count(x=>x.IsActive),request.ExamVenues.Where(x=>exams[x.ExamId].IsActive).Select(x=>x.VenueId).Distinct().Count(),request.ExamVenues.Where(x=>exams[x.ExamId].IsActive).Sum(x=>(long)x.RequiredInvigilatorCount*exams[x.ExamId].Interval.Minutes),rows,gaps,FairnessCalculator.Calculate(request,assignments.Select(ManualRosterService.ToScheduled).ToArray()),teachers.ToDictionary(x=>x.Key,x=>$"{x.Value.FirstName} {x.Value.LastName}"));
+        return new(request.Configuration.SchoolName,dates.Length==0?"No examinations":$"{dates[0]:dd MMM yyyy} – {dates[^1]:dd MMM yyyy}",roster.Name,roster.Status,teachers.Count,teachers.Values.Count(x=>x.IsEligible),request.Exams.Count(x=>x.IsActive),request.ExamVenues.Where(x=>exams[x.ExamId].IsActive).Select(x=>x.VenueId).Distinct().Count(),request.ExamVenues.Where(x=>exams[x.ExamId].IsActive).Sum(x=>(long)x.RequiredInvigilatorCount*exams[x.ExamId].Interval.Minutes),rows,gaps,FairnessCalculator.Calculate(request,assignments.Select(ManualRosterService.ToScheduled).ToArray()),teachers.ToDictionary(x=>x.Key,x=>$"{x.Value.FirstName} {x.Value.LastName}")){TeacherCodes=teachers.ToDictionary(x=>x.Key,x=>x.Value.EmployeeNumber??x.Key.ToString("N")),MinimumBreakMinutes=request.Configuration.MinimumBreakMinutes};
     }
 }
 

@@ -26,6 +26,19 @@ public sealed class ReportAndHandoverCommandsTests
         public Task ExportExcelAsync(ReportSnapshot report,string path,CancellationToken cancellationToken=default)=>Task.CompletedTask;
         public Task ExportPdfAsync(ReportSnapshot report,string path,ReportKind kind,Guid? teacherId=null,CancellationToken cancellationToken=default){LastPdf=kind;return Task.CompletedTask;}
     }
+    private sealed class DemoLauncher : IDemoLauncher
+    {
+        public int OpenCount {get;private set;}
+        public Task OpenAsync(){OpenCount++;return Task.CompletedTask;}
+    }
+    [Fact]
+    public async Task RealisticDemoLauncherDoesNotModifyTheCurrentSchool()
+    {
+        var store=new ExaminationWorkspaceTests.Store();var teacher=new Teacher("Real","Teacher");store.Items.Add(teacher);
+        var launcher=new DemoLauncher();var vm=new SettingsViewModel(store,new Maintenance(),new Files(null),new Dialogs(true),NullLogger<SettingsViewModel>.Instance,launcher);
+        await vm.OpenRealisticDemoCommand.ExecuteAsync(null);
+        Assert.Empty(vm.Error);Assert.Equal(1,launcher.OpenCount);Assert.Same(teacher,Assert.Single(store.Items));
+    }
     [Theory]
     [InlineData(true)]
     [InlineData(false)]

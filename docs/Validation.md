@@ -1,3 +1,19 @@
+# Fairness, realistic demo and editable Excel update — 23 October 2026
+
+Final locked restore, Release build and all **120 tests passed**, with none failed or skipped: Application 33, Domain 16, Infrastructure 22, Integration 6, Scheduling 43. Machine-readable results: `TestResults/fairness-realistic-verified`.
+
+The uploaded roster exposed a real quality problem: a complete roster left 20 of 75 teachers unused and heavily overloaded others. A regression on the original sample failed before the fix. The scheduler now improves its complete incumbent through legal teacher transfers and handovers before full CP-SAT optimisation, then constrains that search against worsening the primary fairness bound. The sample now uses every available teacher, with a largest relative target deviation of **10.6%**, a maximum of **4.00 hours**, and **72 split-duty rows**, at both five- and thirty-second budgets on this machine. Feasibility is independently checked; global optimality is not claimed.
+
+A separate realistic test school has **75 uniquely named teachers, 49 configurable subjects, 62 exams across 21 weekdays, Grades 8–12 and 403 teacher-hours of demand**. It includes varied durations, multiple simultaneous positions, leave, partial availability and reduced workload weights. Its known feasible roster passes independent validation. Real SQLite integration generation achieved **6.5%** maximum relative target deviation and no unused available teachers. After full-period leave for one teacher and a reduced workload weight for another, regeneration achieved **5.0%**, no uncovered duties and no unused remaining available teachers. Total demand stayed constant, the unavailable teacher had a zero target and no duties, and unaffected teachers' targets increased.
+
+New target tests verify leave and reduced responsibility weights redistribute the same total demand. A capped teacher formerly received a target above their capacity; that regression failed before implementing capped redistribution. Generation now previews each teacher's target, available hours, weight, responsibility notes and assigned hours, alongside the equal-share reference average.
+
+Excel regressions failed before editable sheets were added. Tests reopen actual exported files, change a teacher and end time, recalculate formulas and verify totals/differences update while original report sheets stay unchanged. Teacher choices distinguish duplicate names, overlap/short-break and invalid-time checks react to edits, and empty rosters avoid circular formulas. Excel changes are final manual adjustments only, as requested; leave, limits, locks and full coverage are not validated by its partial formula checks and changes do not import into the app.
+
+The realistic demo uses a separate database and explicit launch command. Application tests verify its launcher leaves the current school untouched and adding the subject catalogue is idempotent and preserves school subjects. The full Release WPF cross-build passed with zero warnings/errors. Windows UI execution and visual acceptance remain unavailable on this Linux machine.
+
+---
+
 # Automatic refresh and report binding fix — 23 October 2026
 
 Locked restore and full Release WPF cross-build passed with zero warnings/errors. All **111 tests passed**, none failed or skipped: Application 29, Domain 16, Infrastructure 20, Integration 5, Scheduling 41.

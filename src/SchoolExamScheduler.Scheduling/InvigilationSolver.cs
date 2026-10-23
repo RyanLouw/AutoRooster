@@ -106,6 +106,8 @@ public sealed class InvigilationSolver
         }
         if(wholeSessionsOnly)
             return incumbent is null ? Result(SchedulingStatus.TimeLimitWithoutSolution) : Result(SchedulingStatus.Feasible,incumbent);
+        if(incumbent is not null)
+            incumbent=RosterBalancer.Improve(request,incumbent,TimeSpan.FromSeconds(Math.Max(0,Math.Min(3,settings.SolverTimeLimitSeconds-clock.Elapsed.TotalSeconds))),cancellationToken);
         var targets=FairnessCalculator.Targets(request);
         var totalDemand=request.ExamVenues.Where(v=>exams[v.ExamId].IsActive).Sum(v=>(long)exams[v.ExamId].Interval.Minutes*v.RequiredInvigilatorCount);
         if(totalDemand>1_000_000)return Result(SchedulingStatus.InvalidInput,issues:[new("SizeLimit","Demand is too large for safe fixed-point objective arithmetic.")]);
@@ -134,6 +136,18 @@ public sealed class InvigilationSolver
                 model.AddAbsEquality(deviationDay,daily*dates.Length-minutes);dailyDeviations.Add(deviationDay);
             }
         }
+        if(incumbent is not null && settings.FairnessWeight>0)
+        {
+            var assigned=incumbent.GroupBy(a=>a.TeacherId).ToDictionary(g=>g.Key,g=>g.Sum(a=>(long)a.Interval.Minutes));
+            var bound=targets.Where(t=>t.Value>0).Select(t=>
+            {
+                var target=(long)Math.Round(t.Value*1000);var denominator=Math.Max(1000,target);
+                var numerator=Math.Abs(assigned.GetValueOrDefault(t.Key)*1000-target)*1000;
+                return (numerator+denominator-1)/denominator;
+            }).DefaultIfEmpty(0).Max();
+            // Full-model search must not worsen the seed's primary fairness score.
+            model.Add(maxNormalized<=bound);
+        }
         var maxDuties=model.NewIntVar(0,Math.Max(1,candidates.Count),"max_duties");
         if(counts.Count>0)model.AddMaxEquality(maxDuties,counts);
         var objectives=new List<LinearExpr>();
@@ -146,7 +160,7 @@ public sealed class InvigilationSolver
 
             {
                 if(cancellationToken.IsCancellationRequested){allOptimal=false;break;}
-                var remaining=settings.SolverTimeLimitSeconds-clock.Elapsed.TotalSeconds;
+                var remaining=(feasibilityBudget??settings.SolverTimeLimitSeconds)-clock.Elapsed.TotalSeconds;
                 if(remaining<=0){allOptimal=false;break;}
                 solver.StringParameters=$"linearization_level:2 symmetry_level:0 cp_model_probing_level:0 num_search_workers:1 random_seed:{Math.Max(0,settings.SchedulingSeed)} max_time_in_seconds:{remaining.ToString(CultureInfo.InvariantCulture)}";
                 model.ClearHints();

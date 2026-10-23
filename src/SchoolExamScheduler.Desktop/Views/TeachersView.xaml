@@ -8,7 +8,7 @@
 <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto"><StackPanel>
 <TextBlock Text="Teacher details" FontSize="20" Margin="4,8"/><TextBlock Text="First name"/><TextBox Text="{Binding FirstName,UpdateSourceTrigger=PropertyChanged}"/><TextBlock Text="Surname"/><TextBox Text="{Binding LastName,UpdateSourceTrigger=PropertyChanged}"/>
 <TextBlock Text="Employee number (optional)"/><TextBox Text="{Binding EmployeeNumber}"/><TextBlock Text="Email (optional)"/><TextBox Text="{Binding Email}"/>
-<TextBlock Text="Workload weight (default 1.0)"/><TextBox Text="{Binding WorkloadWeight,ValidatesOnExceptions=True}"/>
+<TextBlock Text="Workload weight (default 1.0)"/><TextBox Text="{Binding WorkloadWeight,ValidatesOnExceptions=True}"/><TextBlock Text="1.0 = normal share; 0.5 = reduced share for other responsibilities. Save, then generate a new roster to redistribute hours. Explain the responsibility in Notes." TextWrapping="Wrap" Margin="4,4,4,12"/>
 <TextBlock Text="Daily maximum minutes (blank = default)"/><TextBox Text="{Binding MaximumDailyMinutes,ValidatesOnExceptions=True}"/>
 <TextBlock Text="Period maximum minutes (blank = no limit)"/><TextBox Text="{Binding MaximumPeriodMinutes,ValidatesOnExceptions=True}"/>
 <CheckBox Content="Active" IsChecked="{Binding IsActive}"/><CheckBox Content="Can invigilate" IsChecked="{Binding CanInvigilate}"/>

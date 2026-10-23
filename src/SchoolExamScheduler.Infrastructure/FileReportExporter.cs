@@ -41,6 +41,7 @@ public sealed partial class FileReportExporter : IReportExporter
     public Task ExportExcelAsync(ReportSnapshot report,string path,CancellationToken cancellationToken=default)=>AtomicWriteAsync(path,temp=>
     {
         using var workbook=new XLWorkbook();
+        AddEditableSheets(workbook,report,cancellationToken);
         void Roster(string name,IEnumerable<DutyRow> data)
         {
             var rows=data.ToArray();var sheet=workbook.Worksheets.Add(name);

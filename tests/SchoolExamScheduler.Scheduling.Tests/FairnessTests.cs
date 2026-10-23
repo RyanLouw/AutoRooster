@@ -10,6 +10,28 @@ public sealed class FairnessTests
         return r with{Exams=exams,ExamVenues=exams.Select(e=>new ExamVenue(e.Id,r.Venues[0].Id,30,positions)).ToArray()};
     }
     [Fact]
+    public void ReducedResponsibilityWeightAndLeaveRedistributeTheSameDemand()
+    {
+        var r=Period(3,2);var before=FairnessCalculator.Targets(r);
+        r.Teachers[0].WorkloadWeight=0.5m;
+        var lighter=FairnessCalculator.Targets(r);
+        Assert.True(lighter[r.Teachers[0].Id]<before[r.Teachers[0].Id]);
+        Assert.True(lighter[r.Teachers[1].Id]>before[r.Teachers[1].Id]);
+        r=r with{Availability=[new(r.Teachers[0].Id,r.Exams[0].ExamDate,new(7,0),new(17,0),false)]};
+        var absent=FairnessCalculator.Targets(r);
+        Assert.True(absent[r.Teachers[0].Id]<lighter[r.Teachers[0].Id]);
+        Assert.True(absent[r.Teachers[1].Id]>lighter[r.Teachers[1].Id]);
+        Assert.Equal(240,absent.Values.Sum(),5);
+    }
+    [Fact]
+    public void TargetsRespectCapacityCapsAndRedistributeExcessToOtherTeachers()
+    {
+        var r=Period(3,2);r.Teachers[0].WorkloadWeight=100;r.Teachers[0].MaximumPeriodMinutes=30;
+        var targets=FairnessCalculator.Targets(r);
+        Assert.Equal(30,targets[r.Teachers[0].Id],5);
+        Assert.Equal(105,targets[r.Teachers[1].Id],5);Assert.Equal(240,targets.Values.Sum(),5);
+    }
+    [Fact]
     public async Task WeightedTargetsAndWholePeriodAllocationAreTwoTwoOne()
     {
         var r=Period();r.Teachers[2].WorkloadWeight=0.5m;
