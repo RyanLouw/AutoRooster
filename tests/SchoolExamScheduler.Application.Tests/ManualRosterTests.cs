@@ -38,7 +38,7 @@ public sealed class ManualRosterTests
     public async Task InvalidManualChangeCannotBeCommitted()
     {
         var (store,service,id)=await Setup();var a=Assert.Single(store.Items.OfType<InvigilationAssignment>());
-        await Assert.ThrowsAsync<ArgumentException>(()=>service.SplitAsync(id,a.Id,new(8,30),a.TeacherId));
+        await Assert.ThrowsAsync<ArgumentException>(()=>service.SplitAsync(id,a.Id,new(8,15),a.TeacherId));
         Assert.Single(store.Items.OfType<InvigilationAssignment>());
     }
 }

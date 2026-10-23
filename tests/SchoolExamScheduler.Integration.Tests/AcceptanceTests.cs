@@ -45,4 +45,15 @@ public sealed class AcceptanceTests
         }
         finally{Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();if(Directory.Exists(directory))Directory.Delete(directory,true);}
     }
+    [Fact]
+    public async Task SampleSchoolCanGenerateWithThirtyMinuteHandoversEnabled()
+    {
+        var sample=DemoDataFactory.Create(42,new(2026,12,1));var request=sample.Request;
+        request.Configuration.AllowSessionSplitting=true;request.Configuration.MinimumSessionMinutes=30;request.Configuration.SchedulingTimeIncrementMinutes=30;
+        request.Configuration.SolverTimeLimitSeconds=30;
+        var result=await new InvigilationSolver().SolveAsync(request);
+        Assert.True(result.Status is SchedulingStatus.Feasible or SchedulingStatus.Optimal,string.Join(";",result.Issues.Select(x=>x.Message)));
+        Assert.Empty(RosterValidator.Validate(request,result.Assignments));
+    }
+
 }

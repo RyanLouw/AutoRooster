@@ -5,7 +5,12 @@ using Microsoft.Extensions.Logging;
 using SchoolExamScheduler.Domain;
 namespace SchoolExamScheduler.Application;
 public sealed record WorkloadChartRow(string Teacher,decimal Weight,int AvailableMinutes,double TargetMinutes,int ActualMinutes,double Difference,double? PercentageOfTarget,int AssignmentCount,int DaysAssigned,double ActualWidth,double TargetWidth)
-{public bool LargeDeviation=>TargetMinutes>0 && Math.Abs(Difference)/TargetMinutes>0.25;}
+{
+    public bool LargeDeviation=>TargetMinutes>0 && Math.Abs(Difference)/TargetMinutes>0.25;
+    public double ActualHours=>ActualMinutes/60.0;
+    public double TargetHours=>TargetMinutes/60.0;
+    public string Duration=>ReportTime.Duration(ActualMinutes);
+}
 public partial class ReportsViewModel(ISchoolDataStore store,ReportingService service,IReportExporter exporter,IFileDialogs files,ILogger<ReportsViewModel> logger) : WorkspaceViewModel(logger)
 {
     public ObservableCollection<RosterVersion> Rosters {get;}=[];
@@ -37,8 +42,9 @@ public partial class ReportsViewModel(ISchoolDataStore store,ReportingService se
         foreach(var x in Report.Fairness.Teachers.OrderByDescending(x=>x.ActualMinutes))Workloads.Add(new(Report.TeacherNames[x.TeacherId],x.Weight,x.AvailableMinutes,x.TargetMinutes,x.ActualMinutes,x.Difference,x.PercentageOfTarget,x.AssignmentCount,x.DaysAssigned,280*x.ActualMinutes/scale,280*x.TargetMinutes/scale));
         RefreshFilters();
     });
-    public IReadOnlyList<ReportKind> ExportKinds {get;}=Enum.GetValues<ReportKind>();
-    [ObservableProperty] private ReportKind exportKind;
+    public IReadOnlyList<ReportExportOption> ExportOptions {get;}=
+    [new(ReportKind.AllReports,"All reports (one PDF)"),new(ReportKind.Workload,"Teacher hours — whole exam period"),new(ReportKind.TeacherTimetables,"All teacher timetables"),new(ReportKind.TeacherRoster,"Selected teacher timetable"),new(ReportKind.FullRoster,"Full examination roster"),new(ReportKind.VenueRoster,"Venue roster"),new(ReportKind.Calendar,"Calendar / timeline"),new(ReportKind.UnfilledDuties,"Unfilled duties")];
+    [ObservableProperty] private ReportKind exportKind=ReportKind.AllReports;
     [ObservableProperty] private string exportStatus="";
     [RelayCommand] private Task ExportExcelAsync()=>RunAsync(async()=>
     {
@@ -46,12 +52,21 @@ public partial class ReportsViewModel(ISchoolDataStore store,ReportingService se
         var path=await files.SavePathAsync("Export complete Excel workbook","Excel workbook|*.xlsx",".xlsx");if(path is null)return;
         await exporter.ExportExcelAsync(await service.BuildAsync(SelectedRoster.Id),path);ExportStatus="Excel workbook saved.";
     });
-    [RelayCommand] private Task ExportPdfAsync()=>RunAsync(async()=>
+    [RelayCommand] private Task ExportAllAsync()=>RunAsync(async()=>
     {
         if(SelectedRoster is null)throw new ArgumentException("Select a roster version.");
-        if(ExportKind==ReportKind.TeacherRoster && SelectedTeacher is null)throw new ArgumentException("Select a teacher in the roster tab first.");
-        var path=await files.SavePathAsync("Export PDF report","PDF document|*.pdf",".pdf");if(path is null)return;
-        await exporter.ExportPdfAsync(await service.BuildAsync(SelectedRoster.Id),path,ExportKind,SelectedTeacher?.Id);ExportStatus="PDF report saved.";
+        var path=await files.SavePathAsync("Export all reports and teacher timetables","Report ZIP|*.zip",".zip");if(path is null)return;
+        await exporter.ExportAllAsync(await service.BuildAsync(SelectedRoster.Id),path);
+        ExportStatus="All reports saved: Excel workbook, combined and separate PDFs, and an individual PDF for every teacher.";
     });
-
+    [RelayCommand] private Task ExportTeacherHoursAsync()=>RunAsync(()=>ExportPdfCoreAsync(ReportKind.Workload));
+    [RelayCommand] private Task ExportPdfAsync()=>RunAsync(()=>ExportPdfCoreAsync(ExportKind));
+    private async Task ExportPdfCoreAsync(ReportKind kind)
+    {
+        if(SelectedRoster is null)throw new ArgumentException("Select a roster version.");
+        if(kind==ReportKind.TeacherRoster && SelectedTeacher is null)throw new ArgumentException("Select a teacher in the roster tab first.");
+        var path=await files.SavePathAsync("Export PDF report","PDF document|*.pdf",".pdf");if(path is null)return;
+        await exporter.ExportPdfAsync(await service.BuildAsync(SelectedRoster.Id),path,kind,SelectedTeacher?.Id);ExportStatus="PDF report saved.";
+    }
 }
+public sealed record ReportExportOption(ReportKind Kind,string Label);

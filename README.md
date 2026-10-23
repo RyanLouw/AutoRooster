@@ -41,6 +41,21 @@ Refresh a screen after adding related records elsewhere. Historical exams with a
 
 For an empty database, Settings offers **Create sample school**, with confirmation. This creates 75 teachers, grades 8–12, overlapping exams, weights and leave across ten dates, using seed 42. It does not run automatically. Tests also include a deliberately infeasible sample.
 
+## Teacher hours, timelines and all-report export
+
+In **Settings**, choose **Enable 30-minute handovers (all grades)** and confirm. This enables splitting, sets the minimum session and regular handover grid to 30 minutes, and permits at least three segments per invigilator position. It applies to every grade, including Grades 8 and 9. You can still change these limits individually. Existing saved settings and rosters are preserved until you choose this action; generate a new roster version afterwards.
+
+In an examination's venue allocation, **Invigilators at once** is the number of teachers who must be present simultaneously. A value of 2 requires two independently covered positions. A handover changes the teacher within one position: for example, teacher A at 08:00–08:30 followed by teacher B at 08:30–09:00. Fairness and availability can lead the solver to split sessions; it does not force a handover in every exam when one is unnecessary. A 30-minute duty is 0.50 hours, not 0.30 hours.
+
+In **Dashboard / Reports**, refresh versions, select the new version and load it:
+
+- **Export teacher hours (PDF)** gives every teacher's total hours, `hh:mm` total, target and duty count across the selected examination period, including teachers with no assigned duties.
+- **All teacher timetables** gives each teacher's dated duties, venue, simultaneous position, exact handover times, duration, hours and split/whole-exam status.
+- **Export ALL reports (ZIP)** includes the Excel workbook, combined PDF, separate teacher-hours/timetable/examination/venue/calendar/unfilled-duty PDFs, and an individual PDF for every teacher.
+- The Excel workbook includes **Teacher hours** (with daily hours), **Teacher timeline**, the existing detailed workload statistics, roster/calendar/venue sheets, and individual teacher sheets.
+
+Exports use the entire selected roster version, regardless of on-screen filters. Reported totals count teacher time: two simultaneous invigilators working for one hour represent two teacher-hours. Changing settings cannot add handovers to an old export; regenerate the roster first.
+
 ## Data, backups and privacy
 
 Data is stored in `%LocalAppData%\SchoolExamScheduler\school-exams.db`, with `logs` and `backups` directories alongside it. Upgrading application binaries does not remove these files. Do not distribute a real school database as demonstration data. Automatic backup before roster changes and deletions is optional. Backups must match the current schema; restore rejects incompatible versions instead of risking data loss. Database migrations run before the main window opens, and startup stops on migration failure.

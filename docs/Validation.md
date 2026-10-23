@@ -1,3 +1,17 @@
+# Report and handover update — 23 October 2026
+
+The full Release WPF cross-build passed with zero warnings/errors. All **106 tests executed and passed**, with zero failed or skipped: Application 26, Domain 16, Infrastructure 20, Integration 4, Scheduling 40. Machine-readable results are in `TestResults/reports-handovers-final` in the execution workspace.
+
+New coverage verifies thirty-minute handovers in Grades 8, 9, 10, 11 and 12; distinct continuous coverage for two simultaneous invigilator positions; fairness choosing half-hour handovers when teachers are fully available; and generation of the actual 75-teacher sample with splitting enabled. The full-school handover scenario returned a complete result and passed independent hard-constraint validation; mathematical optimality is not claimed for a time-limited feasible result.
+
+Excel tests reopen the teacher-hours summary and daily timeline, verify decimal-hour and `hh:mm` totals, check exact handover times, include teachers with zero duties, and ensure two simultaneous positions total two teacher-hours per hour rather than double-counting handover boundaries. PDF extraction verifies teacher totals, split-session times, detailed fairness statistics and the combined report book. ZIP tests verify all report types and every individual teacher PDF, cancellation safety, and preservation of existing files. ViewModel tests verify the explicit handover preset confirmation and export commands.
+
+Existing settings/rosters are preserved. The default for newly created settings is a thirty-minute minimum; existing schools can choose **Enable 30-minute handovers (all grades)** and then generate a new roster version. Splitting applies to every grade, including Grades 8 and 9, as clarified by the user. The setting controls permitted handovers and does not force unnecessary splits. Existing boundary tests were moved to a fifteen-minute invalid segment so they continue checking a length below the newly requested minimum.
+
+The uploaded PDF was examined as a report sample, not as instructions. It showed the demo's full-roster export with splitting disabled. New report exports are tested using the real exporters. Windows UI interaction and visual checks remain unrun on this Linux machine; previous release-prerequisite limitations below still apply.
+
+---
+
 # Validation evidence — 22 October 2026
 
 ## Current status

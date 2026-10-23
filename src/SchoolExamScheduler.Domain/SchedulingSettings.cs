@@ -9,7 +9,7 @@ public sealed class SchedulingSettings
     public int MinimumBreakMinutes { get; set; }=15;
     public int DefaultMaximumDailyMinutes { get; set; }=360;
     public bool AllowSessionSplitting { get; set; }=true;
-    public int MinimumSessionMinutes { get; set; }=60;
+    public int MinimumSessionMinutes { get; set; }=30;
     public int MaximumSessionSegmentsPerPosition { get; set; }=3;
     public int SchedulingTimeIncrementMinutes { get; set; }=15;
     public int FairnessWeight { get; set; }=100;

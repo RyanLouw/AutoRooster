@@ -5,8 +5,14 @@ using Microsoft.Extensions.Logging;
 using SchoolExamScheduler.Domain;
 using SchoolExamScheduler.Scheduling;
 namespace SchoolExamScheduler.Application;
-public sealed record DutyRow(Guid Id,Guid TeacherId,DateOnly Date,string Teacher,string Examination,string Venue,int Position,TimeOnly Start,TimeOnly End,bool IsLocked,int Minutes)
-{public string Label=>$"{Date:dd MMM} {Start:HH:mm} {Venue} P{Position} {Teacher}";}
+public sealed record DutyRow(Guid Id,Guid TeacherId,DateOnly Date,string Teacher,string Examination,string Venue,int Position,TimeOnly Start,TimeOnly End,bool IsLocked,int Minutes,Guid? ExamVenueId=null,TimeOnly? ExamStart=null,TimeOnly? ExamEnd=null)
+{
+    public string Label=>$"{Date:dd MMM} {Start:HH:mm} {Venue} P{Position} {Teacher}";
+    public double Hours=>Minutes/60.0;
+    public string Duration=>ReportTime.Duration(Minutes);
+    public bool IsSplitSession=>ExamStart is not null && ExamEnd is not null && (Start!=ExamStart || End!=ExamEnd);
+    public string Session=>IsSplitSession?"Split":"Whole exam";
+}
 public partial class ReviewRosterViewModel(ISchoolDataStore store,ManualRosterService service,RosterWorkflow workflow,IUserDialogs dialogs,ILogger<ReviewRosterViewModel> logger) : WorkspaceViewModel(logger)
 {
     public ObservableCollection<RosterVersion> Rosters {get;}=[];
@@ -34,7 +40,7 @@ public partial class ReviewRosterViewModel(ISchoolDataStore store,ManualRosterSe
         foreach(var a in (await store.ListAsync<InvigilationAssignment>()).Where(x=>x.RosterVersionId==id && x.AssignmentStatus==AssignmentStatus.Assigned))
         {
             var allocation=request.ExamVenues.Single(x=>x.Id==a.ExamVenueId);var exam=request.Exams.Single(x=>x.Id==allocation.ExamId);var teacher=request.Teachers.Single(x=>x.Id==a.TeacherId);
-            Duties.Add(new(a.Id,a.TeacherId,exam.ExamDate,$"{teacher.FirstName} {teacher.LastName}",$"Grade {exam.Grade} {request.Subjects.Single(x=>x.Id==exam.SubjectId).Name}",request.Venues.Single(x=>x.Id==allocation.VenueId).Name,a.PositionIndex+1,a.StartTime,a.EndTime,a.IsLocked,a.Interval.Minutes));
+            Duties.Add(new(a.Id,a.TeacherId,exam.ExamDate,$"{teacher.FirstName} {teacher.LastName}",$"Grade {exam.Grade} {request.Subjects.Single(x=>x.Id==exam.SubjectId).Name}",request.Venues.Single(x=>x.Id==allocation.VenueId).Name,a.PositionIndex+1,a.StartTime,a.EndTime,a.IsLocked,a.Interval.Minutes,allocation.Id,exam.StartTime,exam.EndTime));
         }
         OnPropertyChanged(nameof(FilteredDuties));Issues.Clear();foreach(var issue in await service.ValidateAsync(id))Issues.Add(issue);ValidationStatus=Issues.Count==0?"Complete roster: hard-constraint validation passed.":"Incomplete or invalid roster — review issues before finalization.";
     }

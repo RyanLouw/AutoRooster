@@ -10,6 +10,7 @@ public partial class GenerationWorkspaceViewModel(RosterWorkflow workflow,ILogge
     [ObservableProperty] private string rosterName="Examination roster";
     [ObservableProperty] private Guid? lockedRosterId;
     [ObservableProperty] private string status="Validate inputs before generating.";
+    [ObservableProperty] private string handoverPolicy="Validate inputs to see the active handover settings.";
     [ObservableProperty] private int examinationCount;
     [ObservableProperty] private int positionCount;
     [ObservableProperty] private long requiredMinutes;
@@ -24,7 +25,9 @@ public partial class GenerationWorkspaceViewModel(RosterWorkflow workflow,ILogge
         var active=request.Exams.Where(x=>x.IsActive).ToDictionary(x=>x.Id);
         PositionCount=request.ExamVenues.Where(x=>active.ContainsKey(x.ExamId)).Sum(x=>x.RequiredInvigilatorCount);
         RequiredMinutes=request.ExamVenues.Where(x=>active.ContainsKey(x.ExamId)).Sum(x=>(long)x.RequiredInvigilatorCount*active[x.ExamId].Interval.Minutes);
-        EligibleTeachers=request.Teachers.Count(x=>x.IsEligible);var issues=RequestValidator.Validate(request);ShowIssues(issues);
+        EligibleTeachers=request.Teachers.Count(x=>x.IsEligible);
+        HandoverPolicy=request.Configuration.AllowSessionSplitting?$"Handovers enabled for every grade: minimum {request.Configuration.MinimumSessionMinutes} minutes per segment, up to {request.Configuration.MaximumSessionSegmentsPerPosition} segments per invigilator position.":"Handovers are disabled in the saved settings. To allow 30-minute sessions, open Settings and select Enable 30-minute handovers, then generate a new roster version.";
+        var issues=RequestValidator.Validate(request);ShowIssues(issues);
         Status=issues.Count==0?"Inputs validated. Hard constraints remain mandatory during generation.":"Correct the input issues before generation.";
         if(issues.Count>0)Error=string.Join(Environment.NewLine,issues.Select(x=>x.Message));
     });

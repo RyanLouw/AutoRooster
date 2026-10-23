@@ -48,7 +48,7 @@ public sealed class ValidationTests
     public void SplitCoverageIsIndependentPerPositionAndMinimumDurationIsEnforced()
     {
         var r=Request();Assert.Empty(RosterValidator.Validate(r,[A(r,0,8,9),A(r,1,9,10)]));
-        var shortAssignment=new ScheduledAssignment(r.ExamVenues[0].Id,r.Teachers[0].Id,0,new(8,0),new(8,30));
+        var shortAssignment=new ScheduledAssignment(r.ExamVenues[0].Id,r.Teachers[0].Id,0,new(8,0),new(8,15));
         Assert.Contains(RosterValidator.Validate(r,[shortAssignment]),i=>i.Code=="SegmentLength");
     }
     [Fact]
